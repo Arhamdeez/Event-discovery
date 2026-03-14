@@ -1,0 +1,60 @@
+.dashboard-main {
+  flex: 1;
+  padding: 2rem 0 4rem;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.dashboard-tabs {
+  display: inline-flex;
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+  gap: 0.25rem;
+}
+
+.tab-btn {
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--color-text);
+}
+
+.tab-btn--active {
+  background: var(--color-surface-strong);
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.dashboard-content .event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.empty-state {
+  color: var(--color-text-muted);
+  padding: 2rem;
+}
