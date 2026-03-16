@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import './EventCard.css';
-import ElectricBorder from './ElectricBorder';
+import TiltedCard from './TiltedCard';
 
 export default function EventCard({ event, compact, featured = false }) {
   const { id, title, date, time, location, image, category, attendeeCount } = event;
@@ -12,7 +12,18 @@ export default function EventCard({ event, compact, featured = false }) {
       className={`event-card glass-card ${compact ? 'event-card--compact' : ''}`}
     >
       <div className="event-card-image">
-        <img src={imageUrl} alt={title} />
+        <TiltedCard
+          imageSrc={imageUrl}
+          altText={title}
+          containerHeight="100%"
+          containerWidth="100%"
+          imageHeight="100%"
+          imageWidth="100%"
+          rotateAmplitude={12}
+          scaleOnHover={1.05}
+          showMobileWarning={false}
+          showTooltip={false}
+        />
         {category && <span className="event-card-category">{category}</span>}
       </div>
       <div className="event-card-body">
@@ -29,20 +40,5 @@ export default function EventCard({ event, compact, featured = false }) {
     </Link>
   );
 
-  if (!featured) {
-    return card;
-  }
-
-  return (
-    <ElectricBorder
-      color="#7df9ff"
-      speed={1}
-      chaos={0.12}
-      borderRadius={24}
-      thickness={2}
-      style={{ borderRadius: 24 }}
-    >
-      {card}
-    </ElectricBorder>
-  );
+  return card;
 }

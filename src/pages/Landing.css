@@ -47,7 +47,10 @@
 .hero {
   position: relative;
   z-index: 1;
-  padding: 5rem 0 6rem;
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  padding: 4rem 0 5rem;
 }
 
 .hero-inner {
