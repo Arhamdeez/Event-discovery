@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
 import './EventCard.css';
+import ElectricBorder from './ElectricBorder';
 
-export default function EventCard({ event, compact }) {
+export default function EventCard({ event, compact, featured = false }) {
   const { id, title, date, time, location, image, category, attendeeCount } = event;
   const imageUrl = image || `https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=240&fit=crop`;
 
-  return (
-    <Link to={`/events/${id}`} className={`event-card glass-card ${compact ? 'event-card--compact' : ''}`}>
+  const card = (
+    <Link
+      to={`/events/${id}`}
+      className={`event-card glass-card ${compact ? 'event-card--compact' : ''}`}
+    >
       <div className="event-card-image">
         <img src={imageUrl} alt={title} />
         {category && <span className="event-card-category">{category}</span>}
@@ -23,5 +27,22 @@ export default function EventCard({ event, compact }) {
         )}
       </div>
     </Link>
+  );
+
+  if (!featured) {
+    return card;
+  }
+
+  return (
+    <ElectricBorder
+      color="#7df9ff"
+      speed={1}
+      chaos={0.12}
+      borderRadius={24}
+      thickness={2}
+      style={{ borderRadius: 24 }}
+    >
+      {card}
+    </ElectricBorder>
   );
 }

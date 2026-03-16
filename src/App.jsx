@@ -7,21 +7,35 @@ import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import CreateEvent from './pages/CreateEvent';
 import AdminDashboard from './pages/AdminDashboard';
+import Silk from './components/Silk';
 import './App.css';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/events" element={<EventsList />} />
-        <Route path="/events/new" element={<CreateEvent />} />
-        <Route path="/events/:id" element={<EventDetails />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-      </Routes>
-    </BrowserRouter>
+    <div className="app-root">
+      <div className="silk-background">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      <div className="app-content">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/events" element={<EventsList />} />
+            <Route path="/events/new" element={<CreateEvent />} />
+            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </div>
   );
 }

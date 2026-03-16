@@ -50,7 +50,7 @@ export default function Landing() {
           </h2>
           <div className="event-grid">
             {mockFeaturedEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} />
+              <EventCard key={ev.id} event={ev} featured />
             ))}
           </div>
           <div className="section-cta">

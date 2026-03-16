@@ -23,7 +23,7 @@
 .auth-bg .blob-1 {
   width: 50vmax;
   height: 50vmax;
-  background: linear-gradient(135deg, var(--color-primary-muted) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(82, 82, 91, 0.45) 0%, transparent 60%);
   top: -15%;
   right: -10%;
 }
@@ -31,7 +31,7 @@
 .auth-bg .blob-2 {
   width: 40vmax;
   height: 40vmax;
-  background: linear-gradient(200deg, rgba(12, 107, 158, 0.12) 0%, transparent 55%);
+  background: linear-gradient(200deg, rgba(63, 63, 70, 0.35) 0%, transparent 55%);
   bottom: -10%;
   left: -10%;
 }
