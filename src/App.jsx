@@ -9,6 +9,7 @@ import CreateEvent from './pages/CreateEvent';
 import AdminDashboard from './pages/AdminDashboard';
 import Silk from './components/Silk';
 import './App.css';
+import AIChatWidget from './components/AIChatWidget';
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </BrowserRouter>
+        <AIChatWidget />
       </div>
     </div>
   );

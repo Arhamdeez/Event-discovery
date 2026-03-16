@@ -4,10 +4,15 @@
   overflow: hidden;
   text-align: left;
   color: inherit;
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  will-change: transform, box-shadow;
 }
 
 .event-card:hover {
   color: inherit;
+  transform: translateY(-6px) scale(1.02) rotate3d(1, -1, 0, 6deg);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.55);
 }
 
 .event-card-image {
