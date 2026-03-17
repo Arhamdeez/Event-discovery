@@ -49,8 +49,16 @@
 .auth-card {
   width: 100%;
   max-width: 420px;
+}
+
+.auth-card .glass-surface__content {
   padding: 2.5rem;
-  border-radius: var(--radius-xl);
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.auth-card-inner {
+  width: 100%;
 }
 
 .auth-card h1 {

@@ -27,9 +27,14 @@
   font-size: 1.75rem;
 }
 
-.create-event-form {
+.create-event-form-wrap .glass-surface__content {
   padding: 2rem;
-  border-radius: var(--radius-xl);
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.create-event-form {
+  width: 100%;
 }
 
 .form-row {

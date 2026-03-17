@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Landing from './pages/Landing';
 import EventsList from './pages/EventsList';
 import EventDetails from './pages/EventDetails';
@@ -7,6 +8,9 @@ import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import CreateEvent from './pages/CreateEvent';
 import AdminDashboard from './pages/AdminDashboard';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
 import Silk from './components/Silk';
 import './App.css';
 import AIChatWidget from './components/AIChatWidget';
@@ -25,6 +29,7 @@ export default function App() {
       </div>
       <div className="app-content">
         <BrowserRouter>
+          <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/events" element={<EventsList />} />
@@ -34,7 +39,11 @@ export default function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
+          </AuthProvider>
         </BrowserRouter>
         <AIChatWidget />
       </div>

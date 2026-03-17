@@ -8,10 +8,14 @@
   font-size: 1.75rem;
 }
 
-.admin-section {
+.admin-section .glass-surface__content {
   padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.admin-section-inner {
+  width: 100%;
 }
 
 .admin-section h2 {

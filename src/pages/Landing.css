@@ -77,10 +77,18 @@
 }
 
 .hero-search {
-  border-radius: var(--radius-lg);
-  padding: 0.5rem;
   max-width: 640px;
   margin: 0 auto;
+}
+
+.hero-search .glass-surface__content {
+  padding: 0.5rem;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.hero-search-form {
+  width: 100%;
 }
 
 .search-row {
@@ -127,14 +135,24 @@
   gap: 1rem;
 }
 
+.category-card-wrap .glass-surface__content {
+  padding: 1.5rem 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-card-wrap .category-card {
+  width: 100%;
+  text-align: center;
+}
+
 .category-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.5rem 1rem;
-  text-align: center;
   color: var(--color-text);
+  text-decoration: none;
 }
 
 .category-card:hover {

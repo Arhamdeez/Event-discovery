@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import GlassSurface from './GlassSurface';
 import './AIChatWidget.css';
 
 export default function AIChatWidget() {
@@ -16,6 +17,45 @@ export default function AIChatWidget() {
 
   const toggleOpen = () => setIsOpen((v) => !v);
 
+  const buildHardcodedReply = (text) => {
+    const lowered = text.toLowerCase();
+
+    if (['hi', 'hey', 'hello', 'yo'].some((greet) => lowered === greet || lowered.startsWith(`${greet} `))) {
+      return "Hello! I’m your events copilot.\n\nYou can ask me things like:\n• “What is this site about?”\n• “Help me plan a small meetup in Lahore this weekend.”\n• “Give me venue ideas for a study group.”";
+    }
+
+    if (
+      lowered.includes('what is this') ||
+      lowered.includes('what’s this') ||
+      lowered.includes('whats this') ||
+      lowered.includes('what is this website') ||
+      lowered.includes('what is this site') ||
+      lowered.includes('what is raunaq') ||
+      lowered.includes('about this website') ||
+      lowered.includes('about this site')
+    ) {
+      return 'This site, Raunaq, is for discovering and planning local events — especially for students and communities. You can browse events, filter by city and category, create your own events, and keep track of what you’ve joined in your dashboard.';
+    }
+
+    if (lowered.includes('plan') || lowered.includes('idea')) {
+      return "Let’s plan something. Tell me:\n• The city\n• Rough date/time\n• Whether it’s a study circle, meetup, or something else.\n\nI’ll suggest a simple structure and next steps.";
+    }
+
+    if (lowered.includes('suggest') || lowered.includes('what to do')) {
+      return 'For quick ideas, try: a small study jam, a casual coffee meetup, or a weekend workshop. Tell me your city and I can adapt these.';
+    }
+
+    if (lowered.includes('venue') || lowered.includes('where')) {
+      return 'Pick a venue that is easy to reach by public transport, has reliable Wi‑Fi if you need it, and feels safe after dark. University spaces, cafés, and libraries are great starting points.';
+    }
+
+    if (lowered.includes('tickets') || lowered.includes('price') || lowered.includes('free')) {
+      return 'For student events, keeping things free or very low‑cost usually works best. You can start free, then test small ticket prices once you know there is consistent interest.';
+    }
+
+    return "Got it. I’m running in a demo mode right now, so I’ll answer with best‑practice tips instead of live AI. Tell me the city, date, and type of event you have in mind and I’ll help you shape it.";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = input.trim();
@@ -31,61 +71,61 @@ export default function AIChatWidget() {
     setInput('');
     setIsLoading(true);
 
-    try {
-      const res = await fetch('http://localhost:4000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
-      });
+    const replyText = buildHardcodedReply(trimmed);
 
-      if (!res.ok) {
-        throw new Error('Chat request failed');
-      }
-
-      const data = await res.json();
-      const assistantReply =
-        data?.reply ||
-        data?.message ||
-        "I'm here to help with events, but I couldn't understand that.";
-
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now().toString() + '-assistant', role: 'assistant', content: assistantReply },
-      ]);
-    } catch (err) {
+    // Small delay to feel like "thinking"
+    setTimeout(() => {
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now().toString() + '-error',
+          id: Date.now().toString() + '-assistant',
           role: 'assistant',
-          content:
-            'Sorry, something went wrong talking to the AI service. Please try again in a moment.',
+          content: replyText,
         },
       ]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
     <div className="ai-chat">
-      <button
-        className="ai-chat-toggle glass-card"
-        type="button"
-        onClick={toggleOpen}
-        aria-expanded={isOpen}
+      <GlassSurface
+        className="ai-chat-toggle-wrap"
+        borderRadius={999}
+        width={52}
+        height={52}
+        backgroundOpacity={0.12}
+        saturation={1.4}
+        displace={0.4}
       >
-        <span className="ai-chat-toggle-icon">◎</span>
-        <span className="ai-chat-toggle-label">Ask AI</span>
-      </button>
+        <button
+          className="ai-chat-toggle"
+          type="button"
+          onClick={toggleOpen}
+          aria-expanded={isOpen}
+        >
+          <span className="ai-chat-toggle-icon">◎</span>
+          <span className="ai-chat-toggle-label">Ask AI</span>
+        </button>
+      </GlassSurface>
 
       {isOpen && (
-        <div className="ai-chat-panel glass-card">
+        <GlassSurface
+          className="ai-chat-panel"
+          borderRadius={24}
+          width="min(360px, 90vw)"
+          backgroundOpacity={0.08}
+          saturation={1.4}
+          displace={0.4}
+          style={{
+            position: 'fixed',
+            right: '1.25rem',
+            bottom: '5.25rem',
+            height: '400px',
+            maxHeight: '70vh',
+          }}
+        >
+          <div className="ai-chat-panel-inner">
           <div className="ai-chat-header">
             <div>
               <div className="ai-chat-title">Events Copilot</div>
@@ -123,7 +163,8 @@ export default function AIChatWidget() {
               Send
             </button>
           </form>
-        </div>
+          </div>
+        </GlassSurface>
       )}
     </div>
   );

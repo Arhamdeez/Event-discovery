@@ -40,10 +40,6 @@
   color: var(--color-primary);
 }
 
-.footer-logo .logo-icon {
-  color: var(--color-primary);
-}
-
 .footer-links {
   display: flex;
   flex-wrap: wrap;

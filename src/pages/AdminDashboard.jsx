@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import GlassSurface from '../components/GlassSurface';
+import { useAuth } from '../context/AuthContext';
 import './AdminDashboard.css';
 
 const PENDING_EVENTS = [
@@ -15,6 +18,11 @@ const USERS = [
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState(PENDING_EVENTS);
+  const { isLoggedIn, isAdmin } = useAuth();
+
+  if (!isLoggedIn || !isAdmin) {
+    return <Navigate to={isLoggedIn ? '/' : '/login'} replace />;
+  }
 
   const handleApprove = (id) => {
     setEvents((prev) => prev.filter((e) => e.id !== id));
@@ -31,70 +39,90 @@ export default function AdminDashboard() {
         <div className="container">
           <h1 className="admin-title">Admin dashboard</h1>
 
-          <section className="admin-section glass">
-            <h2>Pending events</h2>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Date</th>
-                    <th>Organizer</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.length === 0 ? (
+          <GlassSurface
+            className="admin-section"
+            borderRadius={20}
+            width="100%"
+            backgroundOpacity={0.06}
+            saturation={1.4}
+            displace={0.35}
+            style={{ height: 'auto', marginBottom: '2rem' }}
+          >
+            <div className="admin-section-inner">
+              <h2>Pending events</h2>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
                     <tr>
-                      <td colSpan={4} className="empty-cell">No pending events.</td>
+                      <th>Event</th>
+                      <th>Date</th>
+                      <th>Organizer</th>
+                      <th>Actions</th>
                     </tr>
-                  ) : (
-                    events.map((ev) => (
-                      <tr key={ev.id}>
-                        <td>{ev.title}</td>
-                        <td>{ev.date}</td>
-                        <td>{ev.organizer}</td>
-                        <td>
-                          <div className="action-buttons">
-                            <button type="button" className="btn btn-primary btn-approve" onClick={() => handleApprove(ev.id)}>
-                              Approve
-                            </button>
-                            <button type="button" className="btn btn-ghost btn-reject" onClick={() => handleReject(ev.id)}>
-                              Reject
-                            </button>
-                          </div>
-                        </td>
+                  </thead>
+                  <tbody>
+                    {events.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="empty-cell">No pending events.</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      events.map((ev) => (
+                        <tr key={ev.id}>
+                          <td>{ev.title}</td>
+                          <td>{ev.date}</td>
+                          <td>{ev.organizer}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button type="button" className="btn btn-primary btn-approve" onClick={() => handleApprove(ev.id)}>
+                                Approve
+                              </button>
+                              <button type="button" className="btn btn-ghost btn-reject" onClick={() => handleReject(ev.id)}>
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </section>
+          </GlassSurface>
 
-          <section className="admin-section glass">
-            <h2>User management</h2>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Events</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {USERS.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.email}</td>
-                      <td><span className="role-badge">{u.role}</span></td>
-                      <td>{u.events}</td>
+          <GlassSurface
+            className="admin-section"
+            borderRadius={20}
+            width="100%"
+            backgroundOpacity={0.06}
+            saturation={1.4}
+            displace={0.35}
+            style={{ height: 'auto' }}
+          >
+            <div className="admin-section-inner">
+              <h2>User management</h2>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Events</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {USERS.map((u) => (
+                      <tr key={u.id}>
+                        <td>{u.email}</td>
+                        <td><span className="role-badge">{u.role}</span></td>
+                        <td>{u.events}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </section>
+          </GlassSurface>
         </div>
       </main>
       <Footer />

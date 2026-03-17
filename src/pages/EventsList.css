@@ -23,10 +23,18 @@
 }
 
 .filters-sidebar {
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
   position: sticky;
   top: 96px;
+}
+
+.filters-sidebar .glass-surface__content {
+  padding: 1.5rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.filters-sidebar-inner {
+  width: 100%;
 }
 
 .filters-title {
@@ -76,4 +84,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+}
+
+.events-empty {
+  grid-column: 1 / -1;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+.events-empty .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: inherit;
 }

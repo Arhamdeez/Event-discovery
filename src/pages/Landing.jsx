@@ -1,11 +1,37 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
+import GlassSurface from '../components/GlassSurface';
 import { mockFeaturedEvents, categories } from '../data/mock';
 import './Landing.css';
 
 export default function Landing() {
+  const { hash } = useLocation();
+  const navigate = useNavigate();
+  const [searchCity, setSearchCity] = useState('');
+  const [searchCategory, setSearchCategory] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchCity.trim()) params.set('city', searchCity.trim());
+    if (searchCategory) params.set('category', searchCategory);
+    if (searchDate) params.set('date', searchDate);
+    navigate(`/events${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  useEffect(() => {
+    if (hash === '#categories') {
+      const el = document.getElementById('categories');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [hash]);
+
   return (
     <div className="landing">
       <div className="landing-bg">
@@ -26,19 +52,44 @@ export default function Landing() {
           <p className="hero-subtitle">
             Local events for students and communities — from meetups to workshops.
           </p>
-          <div className="hero-search glass">
-            <div className="search-row">
-              <input type="text" className="input search-input" placeholder="City or area" />
-              <select className="select search-select">
-                <option value="">Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>{c.name}</option>
-                ))}
-              </select>
-              <input type="date" className="input search-date" />
-              <button type="button" className="btn btn-primary btn-lg">Search</button>
-            </div>
-          </div>
+          <GlassSurface
+            className="hero-search"
+            borderRadius={24}
+            width="100%"
+            backgroundOpacity={0.06}
+            saturation={1.4}
+            displace={0.4}
+            style={{ height: 'auto', minHeight: 'unset' }}
+          >
+            <form className="hero-search-form" onSubmit={handleSearchSubmit}>
+              <div className="search-row">
+                <input
+                  type="text"
+                  className="input search-input"
+                  placeholder="City or area"
+                  value={searchCity}
+                  onChange={(e) => setSearchCity(e.target.value)}
+                />
+                <select
+                  className="select search-select"
+                  value={searchCategory}
+                  onChange={(e) => setSearchCategory(e.target.value)}
+                >
+                  <option value="">Category</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.slug}>{c.name}</option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  className="input search-date"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
+                />
+                <button type="submit" className="btn btn-primary btn-lg">Search</button>
+              </div>
+            </form>
+          </GlassSurface>
         </div>
       </section>
 
@@ -50,7 +101,7 @@ export default function Landing() {
           </h2>
           <div className="event-grid">
             {mockFeaturedEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} featured />
+              <EventCard key={ev.id} event={ev} />
             ))}
           </div>
           <div className="section-cta">
@@ -59,7 +110,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="section categories-section">
+      <section id="categories" className="section categories-section">
         <div className="container">
           <h2 className="section-title">
             <span>Browse</span>
@@ -67,10 +118,21 @@ export default function Landing() {
           </h2>
           <div className="categories-grid">
             {categories.map((cat) => (
-              <Link key={cat.id} to={`/events?category=${cat.slug}`} className="category-card glass-card">
-                <span className="category-icon">{cat.icon}</span>
-                <span className="category-name">{cat.name}</span>
-              </Link>
+              <GlassSurface
+                key={cat.id}
+                borderRadius={24}
+                width="100%"
+                backgroundOpacity={0.06}
+                saturation={1.3}
+                displace={0.25}
+                style={{ height: 'auto' }}
+                className="category-card-wrap"
+              >
+                <Link to={`/events?category=${cat.slug}`} className="category-card">
+                  <span className="category-icon">{cat.icon}</span>
+                  <span className="category-name">{cat.name}</span>
+                </Link>
+              </GlassSurface>
             ))}
           </div>
         </div>

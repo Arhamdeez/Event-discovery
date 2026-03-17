@@ -17,9 +17,11 @@
   --color-surface-strong: rgba(15, 15, 18, 0.98);
   --color-border: rgba(82, 82, 91, 0.6);
   --color-border-strong: rgba(24, 24, 27, 0.95);
-  --color-text: #e5e5e5;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
+  --color-text: #f4f4f8;
+  --color-text-secondary: #c2c2d0;
+  --color-text-muted: #9090a8;
+  --text-shadow-readability: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.2);
+  --text-shadow-strong: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.15);
 
   /* Glass — dark neutral glassmorphism */
   --glass-bg: rgba(15, 15, 18, 0.88);
@@ -69,6 +71,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   margin: 0 0 0.5em;
+  text-shadow: var(--text-shadow-readability);
 }
 
 h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
@@ -155,14 +158,27 @@ a:hover {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: white;
-  box-shadow: 0 4px 14px rgba(15, 15, 18, 0.7);
+  background: linear-gradient(
+    135deg,
+    rgba(161, 161, 170, 0.45) 0%,
+    rgba(113, 113, 122, 0.5) 100%
+  );
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-light);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+  background: linear-gradient(
+    135deg,
+    rgba(212, 212, 216, 0.5) 0%,
+    rgba(161, 161, 170, 0.55) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--glass-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-glass {
@@ -171,6 +187,7 @@ a:hover {
   -webkit-backdrop-filter: blur(var(--blur));
   border: 1px solid var(--glass-border);
   color: var(--color-text);
+  text-shadow: var(--text-shadow-readability);
   box-shadow: var(--glass-shadow);
 }
 
@@ -185,12 +202,17 @@ a:hover {
 }
 
 .btn-ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-text-secondary);
+  text-shadow: var(--text-shadow-readability);
 }
 
 .btn-ghost:hover {
   background: var(--color-primary-muted);
+  border-color: rgba(255, 255, 255, 0.12);
   color: var(--color-primary);
 }
 
@@ -212,6 +234,7 @@ a:hover {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text-secondary);
+  text-shadow: var(--text-shadow-readability);
 }
 
 .input, .select, .textarea {
@@ -223,6 +246,7 @@ a:hover {
   border: 1px solid var(--color-border-strong);
   background: var(--color-surface-strong);
   color: var(--color-text);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -262,6 +286,7 @@ a:hover {
 .section-title {
   margin-bottom: 2rem;
   color: var(--color-text);
+  text-shadow: var(--text-shadow-readability);
 }
 
 .section-title span {

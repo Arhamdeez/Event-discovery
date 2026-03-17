@@ -12,30 +12,27 @@
 
 .navbar {
   pointer-events: auto;
+  border-radius: var(--radius-lg);
+}
+
+.navbar .glass-surface__content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 0.35rem 0.5rem 0.35rem 0.75rem;
-  height: 64px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.06) 45%,
-    rgba(0, 0, 0, 0.16) 100%
-  );
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
-  box-shadow:
-    0 22px 55px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  padding: 0.35rem 1.25rem 0.35rem 1.5rem;
+}
+
+.navbar-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
 }
 
 .navbar-pill {
-  max-width: 960px;
+  max-width: 1100px;
   width: 100%;
 }
 
@@ -43,6 +40,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding-left: 0.25rem;
+  min-width: 4.5rem;
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 1.25rem;
@@ -51,12 +50,6 @@
 
 .navbar-logo:hover {
   color: var(--color-primary);
-}
-
-.logo-icon {
-  font-size: 1.5rem;
-  color: #f5f5f5;
-  opacity: 0.95;
 }
 
 .navbar-links {
@@ -69,7 +62,7 @@
 
 .navbar-links a {
   padding: 0.45rem 0.9rem;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 0.9375rem;
   font-weight: 500;
   color: rgba(243, 244, 246, 0.72);
@@ -85,20 +78,26 @@
 .navbar-cta {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
-.nav-ghost {
-  margin-right: 0.25rem;
+.navbar-user-email {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-signup {
   margin-left: 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   padding-inline: 1.4rem;
 }
 
 @media (max-width: 640px) {
-  .navbar-links a:not(.btn-signup):not([href="/login"]) {
+  .navbar-links a {
     display: none;
   }
 }

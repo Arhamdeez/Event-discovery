@@ -1,9 +1,26 @@
+.event-card-glass {
+  display: block;
+}
+
+.event-card-glass .glass-surface__content {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.event-card-glass .event-card {
+  border-radius: inherit;
+}
+
 .event-card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
   text-align: left;
   color: inherit;
+  height: 100%;
   transform-style: preserve-3d;
   transition: transform 0.35s ease, box-shadow 0.35s ease;
   will-change: transform, box-shadow;
