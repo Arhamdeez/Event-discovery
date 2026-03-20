@@ -21,13 +21,14 @@ export default function About() {
             <div className="static-page-content">
               <h1>About Raunaq</h1>
               <p>
-                Raunaq helps students and communities discover, create, and join local events — from
-                meetups to workshops — with a focus on simple planning and meaningful connections.
+                Raunaq is for Pakistan — students, societies, and neighbourhoods discovering what’s on
+                in their city: arena concerts, club and rooftop nights, festivals, meetups, food walks,
+                and heritage experiences — all in one place.
               </p>
               <h2>What we’re building</h2>
               <p>
-                A clean event discovery experience with strong filters, a dashboard for your created
-                and joined events, and a design language that feels modern and calm.
+                Simple discovery by city and category, easy event creation, and a dashboard for what you
+                host or join — with a calm, modern look that still feels at home from Karachi to Peshawar.
               </p>
             </div>
           </GlassSurface>

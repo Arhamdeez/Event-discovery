@@ -1,10 +1,17 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import GlassSurface from './GlassSurface';
+import { EVENT_IMAGE_FALLBACK } from '../constants/images';
 import './EventCard.css';
 
 export default function EventCard({ event, compact = false }) {
   const { id, title, date, time, location, image, category, attendeeCount } = event;
-  const imageUrl = image || `https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=240&fit=crop`;
+  const primaryUrl = image || EVENT_IMAGE_FALLBACK;
+  const [imgSrc, setImgSrc] = useState(primaryUrl);
+
+  useEffect(() => {
+    setImgSrc(primaryUrl);
+  }, [primaryUrl]);
 
   return (
     <GlassSurface
@@ -22,7 +29,14 @@ export default function EventCard({ event, compact = false }) {
         className={`event-card ${compact ? 'event-card--compact' : ''}`}
       >
         <div className="event-card-image">
-          <img src={imageUrl} alt={title} />
+          <img
+            src={imgSrc}
+            alt={title}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer-when-downgrade"
+            onError={() => setImgSrc(EVENT_IMAGE_FALLBACK)}
+          />
           {category && <span className="event-card-category">{category}</span>}
         </div>
         <div className="event-card-body">

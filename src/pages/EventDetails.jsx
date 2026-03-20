@@ -1,17 +1,24 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { getEventById } from '../data/mock';
+import { EVENT_IMAGE_FALLBACK } from '../constants/images';
 import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
   const { isLoggedIn, attendEvent, attendedEventIds, createdEvents } = useAuth();
   const event = getEventById(id) || createdEvents.find((e) => e.id === id);
-  const imageUrl = event?.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=400&fit=crop';
+  const primaryUrl = event?.image || EVENT_IMAGE_FALLBACK;
+  const [bannerSrc, setBannerSrc] = useState(primaryUrl);
   const isAttending = event && attendedEventIds.includes(event.id);
+
+  useEffect(() => {
+    setBannerSrc(primaryUrl);
+  }, [primaryUrl, id]);
 
   if (!event) {
     return (
@@ -31,7 +38,13 @@ export default function EventDetails() {
       <Navbar />
       <main className="event-details">
         <div className="event-banner">
-          <img src={imageUrl} alt={event.title} />
+          <img
+            src={bannerSrc}
+            alt={event.title}
+            decoding="async"
+            referrerPolicy="no-referrer-when-downgrade"
+            onError={() => setBannerSrc(EVENT_IMAGE_FALLBACK)}
+          />
           <div className="event-banner-overlay" />
           <span className="event-banner-category">{event.category}</span>
         </div>
@@ -55,9 +68,8 @@ export default function EventDetails() {
               <div className="event-details-body-inner">
                 <h3>About this event</h3>
                 <p>
-                  Join us for an engaging session that brings together students and professionals.
-                  This event is designed to foster connections and share knowledge in a relaxed setting.
-                  Refreshments will be provided. All experience levels welcome.
+                  {event.description ||
+                    'Join us for an engaging session with students and communities across Pakistan. All experience levels welcome.'}
                 </p>
               </div>
             </GlassSurface>
@@ -73,10 +85,14 @@ export default function EventDetails() {
               <div className="organizer-inner">
                 <h3>Organizer</h3>
                 <div className="organizer-info">
-                  <div className="organizer-avatar">C</div>
+                  <div className="organizer-avatar">
+                    {(event.organizerInitial || event.organizerName || 'R').toString().charAt(0).toUpperCase()}
+                  </div>
                   <div>
-                    <strong>Campus Events Team</strong>
-                    <span className="organizer-email">events@campus.edu</span>
+                    <strong>{event.organizerName || 'Raunaq Host'}</strong>
+                    <span className="organizer-email">
+                      {event.organizerEmail || 'events@raunaq.app'}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -34,7 +34,7 @@ export default function AIChatWidget() {
       lowered.includes('about this website') ||
       lowered.includes('about this site')
     ) {
-      return 'This site, Raunaq, is for discovering and planning local events — especially for students and communities. You can browse events, filter by city and category, create your own events, and keep track of what you’ve joined in your dashboard.';
+      return 'Raunaq is built for Pakistan — discover and plan local events in cities like Lahore, Karachi, and Islamabad. Browse mehfils, tech meetups, food walks, and more; filter by city and category; create your own events; and track what you’ve joined in your dashboard.';
     }
 
     if (lowered.includes('plan') || lowered.includes('idea')) {

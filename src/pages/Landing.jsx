@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
+import TextPressure from '../components/TextPressure';
 import { mockFeaturedEvents, categories } from '../data/mock';
 import './Landing.css';
 
@@ -45,12 +46,26 @@ export default function Landing() {
       <section className="hero">
         <div className="container hero-inner">
           <h1 className="hero-title">
-            Discover events near you.
-            <br />
-            <span className="hero-title-accent">Create. Join. Connect.</span>
+            <span className="hero-title-line">Discover events near you.</span>
+            <span className="sr-only">Create. Join. Connect.</span>
           </h1>
+          <div className="hero-title-pressure" aria-hidden="true">
+            <TextPressure
+              text="Create. Join. Connect."
+              flex={false}
+              scale={false}
+              width={false}
+              weight
+              italic={false}
+              alpha={false}
+              stroke={false}
+              textColor="#ececf3"
+              minFontSize={84}
+            />
+          </div>
           <p className="hero-subtitle">
-            Local events for students and communities — from meetups to workshops.
+            Discover gatherings across Pakistan — concerts, rooftop nights, festivals, tech meetups,
+            food walks, and heritage walks in cities like Lahore, Karachi, and Islamabad.
           </p>
           <GlassSurface
             className="hero-search"

@@ -4,9 +4,10 @@ import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { categories } from '../data/mock';
+import { EVENT_IMAGE_FALLBACK } from '../constants/images';
 import './CreateEvent.css';
 
-const defaultImage = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=240&fit=crop';
+const defaultImage = EVENT_IMAGE_FALLBACK;
 
 export default function CreateEvent() {
   const isEdit = false;
@@ -64,12 +65,12 @@ export default function CreateEvent() {
             <div className="form-row">
               <div className="input-wrap form-full">
                 <label htmlFor="title">Title</label>
-                <input id="title" type="text" className="input" placeholder="Event name" required />
+                <input id="title" type="text" className="input" placeholder="e.g. Chai & Code — Gulberg" required />
               </div>
             </div>
             <div className="input-wrap form-full">
               <label htmlFor="description">Description</label>
-              <textarea id="description" className="textarea" placeholder="What's your event about?" rows={4} />
+              <textarea id="description" className="textarea" placeholder="Describe your event — timing, dress code, language (Urdu/English), and what to bring." rows={4} />
             </div>
             <div className="form-row form-grid">
               <div className="input-wrap">
@@ -92,7 +93,7 @@ export default function CreateEvent() {
             </div>
             <div className="input-wrap form-full">
               <label htmlFor="location">Location</label>
-              <input id="location" type="text" className="input" placeholder="Venue or address" required />
+              <input id="location" type="text" className="input" placeholder="e.g. Packages Mall, Lahore or F-7 Markaz, Islamabad" required />
             </div>
             <div className="input-wrap form-full">
               <label htmlFor="image">Event image URL</label>

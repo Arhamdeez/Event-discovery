@@ -6,7 +6,6 @@ import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { getEventById } from '../data/mock';
-import { mockEventsList } from '../data/mock';
 import './Dashboard.css';
 
 const TABS = [

@@ -39,8 +39,10 @@ export default function EventsList() {
       list = list.filter((ev) => (ev.location || '').toLowerCase().includes(q));
     }
     if (category) {
-      const catSlug = category.toLowerCase();
-      list = list.filter((ev) => (ev.category || '').toLowerCase() === catSlug || (ev.category || '').toLowerCase().replace(/\s+/g, '-') === catSlug);
+      const selectedCat = categories.find((c) => c.slug === category);
+      if (selectedCat) {
+        list = list.filter((ev) => ev.category === selectedCat.name);
+      }
     }
     if (dateFilter) {
       list = list.filter((ev) => {
@@ -80,7 +82,7 @@ export default function EventsList() {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Boston"
+                  placeholder="e.g. Lahore, Karachi, Islamabad"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
