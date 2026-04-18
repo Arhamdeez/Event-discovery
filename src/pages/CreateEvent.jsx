@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -14,10 +15,12 @@ export default function CreateEvent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoggedIn, authLoading, addCreatedEvent } = useAuth();
-  const saveError = location.state?.saveError;
+  const [saveError, setSaveError] = useState(location.state?.saveError ?? null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaveError(null);
     const form = e.target;
     const categorySlug = form.querySelector('#category').value;
     const categoryName = categories.find((c) => c.slug === categorySlug)?.name || categorySlug;
@@ -37,13 +40,17 @@ export default function CreateEvent() {
       attendeeCount: 0,
       image: form.querySelector('#image').value.trim() || defaultImage,
     };
-    navigate('/dashboard', { replace: true, state: { pendingCreatedEvent: event } });
-    addCreatedEvent(event).catch((err) => {
-      navigate('/events/new', {
-        replace: true,
-        state: { saveError: err.message || 'Could not save the event.' },
-      });
-    });
+
+    setSaving(true);
+    try {
+      await addCreatedEvent(event);
+      // Only leave this page after Firestore commit succeeds so refresh keeps the event.
+      navigate('/dashboard', { replace: true, state: { pendingCreatedEvent: event } });
+    } catch (err) {
+      setSaveError(err.message || 'Could not save the event.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (authLoading) {
@@ -82,11 +89,11 @@ export default function CreateEvent() {
             displace={0.4}
             style={{ height: 'auto' }}
           >
-            <form className="create-event-form" onSubmit={handleSubmit}>
+            <form className="create-event-form" onSubmit={handleSubmit} aria-busy={saving}>
             {saveError ? (
               <div className="create-event-error-row" style={{ marginBottom: '1rem' }}>
                 <p className="auth-error" role="alert" style={{ marginBottom: '0.5rem' }}>{saveError}</p>
-                <button type="button" className="btn btn-ghost" onClick={() => navigate('.', { replace: true, state: {} })}>
+                <button type="button" className="btn btn-ghost" onClick={() => { setSaveError(null); navigate('.', { replace: true, state: {} }); }}>
                   Dismiss
                 </button>
               </div>
@@ -137,8 +144,8 @@ export default function CreateEvent() {
             </div>
             <div className="form-actions">
               <Link to="/dashboard" className="btn btn-ghost">Cancel</Link>
-              <button type="submit" className="btn btn-primary btn-lg">
-                {isEdit ? 'Save changes' : 'Create event'}
+              <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
+                {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create event'}
               </button>
             </div>
           </form>
