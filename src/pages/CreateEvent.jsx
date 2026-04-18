@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
@@ -12,7 +12,9 @@ const defaultImage = EVENT_IMAGE_FALLBACK;
 export default function CreateEvent() {
   const isEdit = false;
   const navigate = useNavigate();
-  const { isLoggedIn, addCreatedEvent } = useAuth();
+  const location = useLocation();
+  const { isLoggedIn, authLoading, addCreatedEvent } = useAuth();
+  const saveError = location.state?.saveError;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,9 +37,28 @@ export default function CreateEvent() {
       attendeeCount: 0,
       image: form.querySelector('#image').value.trim() || defaultImage,
     };
-    addCreatedEvent(event);
-    navigate('/dashboard', { replace: true });
+    navigate('/dashboard', { replace: true, state: { pendingCreatedEvent: event } });
+    addCreatedEvent(event).catch((err) => {
+      navigate('/events/new', {
+        replace: true,
+        state: { saveError: err.message || 'Could not save the event.' },
+      });
+    });
   };
+
+  if (authLoading) {
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="create-event-main">
+          <div className="container">
+            <p className="empty-state">Loading…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
@@ -62,6 +83,14 @@ export default function CreateEvent() {
             style={{ height: 'auto' }}
           >
             <form className="create-event-form" onSubmit={handleSubmit}>
+            {saveError ? (
+              <div className="create-event-error-row" style={{ marginBottom: '1rem' }}>
+                <p className="auth-error" role="alert" style={{ marginBottom: '0.5rem' }}>{saveError}</p>
+                <button type="button" className="btn btn-ghost" onClick={() => navigate('.', { replace: true, state: {} })}>
+                  Dismiss
+                </button>
+              </div>
+            ) : null}
             <div className="form-row">
               <div className="input-wrap form-full">
                 <label htmlFor="title">Title</label>
@@ -97,7 +126,14 @@ export default function CreateEvent() {
             </div>
             <div className="input-wrap form-full">
               <label htmlFor="image">Event image URL</label>
-              <input id="image" type="url" className="input" placeholder="https://..." />
+              <input
+                id="image"
+                type="text"
+                className="input"
+                placeholder="https://... (optional)"
+                inputMode="url"
+                autoComplete="off"
+              />
             </div>
             <div className="form-actions">
               <Link to="/dashboard" className="btn btn-ghost">Cancel</Link>

@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { getEventById } from '../data/mock';
+import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
 import './Dashboard.css';
 
 const TABS = [
@@ -15,13 +16,51 @@ const TABS = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('created');
-  const { isLoggedIn, createdEvents, attendedEventIds } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isLoggedIn, authLoading, createdEvents, attendedEventIds } = useAuth();
+  const publicEvents = usePublicFirestoreEvents();
+
+  const pendingCreatedEvent = location.state?.pendingCreatedEvent;
+  const pendingId = pendingCreatedEvent?.id;
+
+  const displayCreatedEvents = useMemo(() => {
+    if (!pendingId || !pendingCreatedEvent) return createdEvents;
+    if (createdEvents.some((e) => e.id === pendingId)) return createdEvents;
+    return [pendingCreatedEvent, ...createdEvents];
+  }, [pendingId, pendingCreatedEvent, createdEvents]);
+
+  useEffect(() => {
+    if (!pendingId) return;
+    if (createdEvents.some((e) => e.id === pendingId)) {
+      navigate('/dashboard', { replace: true, state: {} });
+    }
+  }, [pendingId, createdEvents, navigate]);
 
   const joinedEvents = useMemo(() => {
     return attendedEventIds
-      .map((id) => getEventById(id) || createdEvents.find((e) => e.id === id))
+      .map(
+        (id) =>
+          getEventById(id) ||
+          createdEvents.find((e) => e.id === id) ||
+          publicEvents.find((e) => e.id === id),
+      )
       .filter(Boolean);
-  }, [attendedEventIds, createdEvents]);
+  }, [attendedEventIds, createdEvents, publicEvents]);
+
+  if (authLoading) {
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="dashboard-main">
+          <div className="container">
+            <p className="empty-state">Loading…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
@@ -33,7 +72,12 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <div className="container">
           <div className="dashboard-header">
-            <h1>My events</h1>
+            <div>
+              <h1>My events</h1>
+              {pendingId && !createdEvents.some((e) => e.id === pendingId) ? (
+                <p className="dashboard-sync-hint">Finishing save to the cloud…</p>
+              ) : null}
+            </div>
             <Link to="/events/new" className="btn btn-primary">Create new event</Link>
           </div>
           <GlassSurface
@@ -61,7 +105,7 @@ export default function Dashboard() {
           <div className="dashboard-content">
             {activeTab === 'created' && (
               <div className="event-grid">
-                {createdEvents.length ? createdEvents.map((ev) => (
+                {displayCreatedEvents.length ? displayCreatedEvents.map((ev) => (
                   <EventCard key={ev.id} event={ev} />
                 )) : (
                   <p className="empty-state">You haven&apos;t created any events yet. <Link to="/events/new">Create one</Link>.</p>

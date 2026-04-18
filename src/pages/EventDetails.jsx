@@ -6,19 +6,75 @@ import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK } from '../constants/images';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
   const { isLoggedIn, attendEvent, attendedEventIds, createdEvents } = useAuth();
-  const event = getEventById(id) || createdEvents.find((e) => e.id === id);
+  const [attendError, setAttendError] = useState('');
+  const [remoteEvent, setRemoteEvent] = useState(null);
+  const [remoteLoaded, setRemoteLoaded] = useState(false);
+
+  const localEvent = id ? getEventById(id) || createdEvents.find((e) => e.id === id) : null;
+
+  useEffect(() => {
+    if (!id || !db) {
+      queueMicrotask(() => {
+        setRemoteLoaded(true);
+        setRemoteEvent(null);
+      });
+      return undefined;
+    }
+    const local = getEventById(id) || createdEvents.find((e) => e.id === id);
+    if (local) {
+      queueMicrotask(() => {
+        setRemoteLoaded(true);
+        setRemoteEvent(null);
+      });
+      return undefined;
+    }
+    queueMicrotask(() => setRemoteLoaded(false));
+    let alive = true;
+    getDoc(doc(db, 'events', id))
+      .then((snap) => {
+        if (!alive) return;
+        setRemoteLoaded(true);
+        if (snap.exists()) setRemoteEvent({ id: snap.id, ...snap.data() });
+        else setRemoteEvent(null);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setRemoteLoaded(true);
+        setRemoteEvent(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id, createdEvents]);
+
+  const event = localEvent || remoteEvent;
   const primaryUrl = event?.image || EVENT_IMAGE_FALLBACK;
   const [bannerSrc, setBannerSrc] = useState(primaryUrl);
   const isAttending = event && attendedEventIds.includes(event.id);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- sync banner with resolved image URL */
     setBannerSrc(primaryUrl);
   }, [primaryUrl, id]);
+
+  if (!event && !remoteLoaded) {
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="container section">
+          <p>Loading event…</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -119,14 +175,24 @@ export default function EventDetails() {
                 ) : isAttending ? (
                   <p className="attending-badge">You&apos;re attending</p>
                 ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-lg"
-                    style={{ width: '100%' }}
-                    onClick={() => attendEvent(event.id)}
-                  >
-                    Attend event
-                  </button>
+                  <>
+                    {attendError ? <p className="auth-error" role="alert" style={{ marginBottom: '0.75rem' }}>{attendError}</p> : null}
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-lg"
+                      style={{ width: '100%' }}
+                      onClick={async () => {
+                        setAttendError('');
+                        try {
+                          await attendEvent(event.id);
+                        } catch (err) {
+                          setAttendError(err.message || 'Could not save RSVP.');
+                        }
+                      }}
+                    >
+                      Attend event
+                    </button>
+                  </>
                 )}
                 <Link to="/events" className="back-link">← Back to events</Link>
               </div>

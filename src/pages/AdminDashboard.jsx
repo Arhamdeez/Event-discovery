@@ -18,7 +18,21 @@ const USERS = [
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState(PENDING_EVENTS);
-  const { isLoggedIn, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin, authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="admin-main">
+          <div className="container">
+            <p className="empty-state">Loading…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!isLoggedIn || !isAdmin) {
     return <Navigate to={isLoggedIn ? '/' : '/login'} replace />;

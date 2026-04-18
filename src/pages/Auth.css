@@ -88,3 +88,16 @@
 .auth-footer a {
   font-weight: 500;
 }
+
+.auth-error {
+  color: #b91c1c;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.auth-loading-msg {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-secondary);
+}

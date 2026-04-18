@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import { mockEventsList, categories } from '../data/mock';
+import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
 import './EventsList.css';
 
 const SORT_OPTIONS = [
@@ -19,7 +20,19 @@ function parseEventDate(dateStr) {
   return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
+function mergeLiveWithMock(live, mock) {
+  const ids = new Set(live.map((e) => String(e.id)));
+  return [...live, ...mock.filter((m) => !ids.has(String(m.id)))];
+}
+
+function createdAtMillis(ev) {
+  const v = ev.createdAt;
+  if (v && typeof v.toMillis === 'function') return v.toMillis();
+  return 0;
+}
+
 export default function EventsList() {
+  const liveEvents = usePublicFirestoreEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sort, setSort] = useState('latest');
   const [city, setCity] = useState(() => searchParams.get('city') || '');
@@ -33,7 +46,7 @@ export default function EventsList() {
   }, [searchParams]);
 
   const filteredEvents = useMemo(() => {
-    let list = [...mockEventsList];
+    let list = mergeLiveWithMock(liveEvents, mockEventsList);
     if (city.trim()) {
       const q = city.trim().toLowerCase();
       list = list.filter((ev) => (ev.location || '').toLowerCase().includes(q));
@@ -50,8 +63,22 @@ export default function EventsList() {
         return eventDate && eventDate >= dateFilter;
       });
     }
+    if (sort === 'latest') {
+      list = [...list].sort((a, b) => createdAtMillis(b) - createdAtMillis(a));
+    } else if (sort === 'popular') {
+      list = [...list].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0));
+    } else if (sort === 'upcoming') {
+      list = [...list].sort((a, b) => {
+        const da = parseEventDate(a.date);
+        const db = parseEventDate(b.date);
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da.localeCompare(db);
+      });
+    }
     return list;
-  }, [city, category, dateFilter]);
+  }, [city, category, dateFilter, sort, liveEvents]);
 
   const applyFilters = () => {
     const params = new URLSearchParams();

@@ -17,6 +17,12 @@
   font-size: 1.75rem;
 }
 
+.dashboard-sync-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
 .dashboard-tabs .glass-surface__content {
   padding: 0.35rem;
   align-items: center;

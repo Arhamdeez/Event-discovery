@@ -6,9 +6,16 @@ import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import TextPressure from '../components/TextPressure';
 import { mockFeaturedEvents, categories } from '../data/mock';
+import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
 import './Landing.css';
 
+function mergeFeatured(live, mock) {
+  const ids = new Set(live.map((e) => String(e.id)));
+  return [...live, ...mock.filter((m) => !ids.has(String(m.id)))].slice(0, 6);
+}
+
 export default function Landing() {
+  const liveEvents = usePublicFirestoreEvents();
   const { hash } = useLocation();
   const navigate = useNavigate();
   const [searchCity, setSearchCity] = useState('');
@@ -115,7 +122,7 @@ export default function Landing() {
             Featured events
           </h2>
           <div className="event-grid">
-            {mockFeaturedEvents.map((ev) => (
+            {mergeFeatured(liveEvents, mockFeaturedEvents).map((ev) => (
               <EventCard key={ev.id} event={ev} />
             ))}
           </div>
