@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK } from '../constants/images';
 import { buildTicketTiers } from '../lib/tickets';
@@ -14,7 +14,7 @@ import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
-  const { user, isLoggedIn, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
+  const { isLoggedIn, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
   const [attendError, setAttendError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedTier, setSelectedTier] = useState('');
@@ -66,7 +66,6 @@ export default function EventDetails() {
   };
 
   useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect -- sync banner with resolved image URL */
     setBannerSrc(primaryUrl);
   }, [primaryUrl, id]);
 

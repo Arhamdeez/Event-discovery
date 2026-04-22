@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getEventById } from '../data/mock';
 import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
 import './Dashboard.css';
@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('created');
   const location = useLocation();
   const navigate = useNavigate();
-  const { isLoggedIn, authLoading, createdEvents, attendedEventIds } = useAuth();
+  const { isLoggedIn, authLoading, createdEvents, attendedEventIds, user, logout } = useAuth();
   const publicEvents = usePublicFirestoreEvents();
 
   const pendingCreatedEvent = location.state?.pendingCreatedEvent;
@@ -63,7 +63,34 @@ export default function Dashboard() {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="dashboard-main">
+          <div className="container">
+            <GlassSurface
+              className="dashboard-auth-card"
+              borderRadius={20}
+              width="100%"
+              backgroundOpacity={0.06}
+              saturation={1.3}
+              displace={0.3}
+              style={{ height: 'auto' }}
+            >
+              <div className="dashboard-auth-card-inner">
+                <h1>Dashboard</h1>
+                <p>Sign in to manage your created events and joined events in one place.</p>
+                <div className="dashboard-auth-actions">
+                  <Link to="/login" className="btn btn-primary">Sign in</Link>
+                  <Link to="/signup" className="btn btn-ghost">Create account</Link>
+                </div>
+              </div>
+            </GlassSurface>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
@@ -71,6 +98,25 @@ export default function Dashboard() {
       <Navbar />
       <main className="dashboard-main">
         <div className="container">
+          <GlassSurface
+            className="dashboard-account-card"
+            borderRadius={16}
+            width="100%"
+            backgroundOpacity={0.06}
+            saturation={1.3}
+            displace={0.3}
+            style={{ height: 'auto', marginBottom: '1rem' }}
+          >
+            <div className="dashboard-account-inner">
+              <div>
+                <p className="dashboard-account-label">Signed in as</p>
+                <p className="dashboard-account-email">{user?.email || 'User'}</p>
+              </div>
+              <button type="button" className="btn btn-ghost" onClick={logout}>
+                Sign out
+              </button>
+            </div>
+          </GlassSurface>
           <div className="dashboard-header">
             <div>
               <h1>My events</h1>

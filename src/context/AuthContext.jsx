@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -15,10 +15,10 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { auth, db, firebaseInitError } from '../lib/firebase';
+import { detectAndCacheAutoCity } from '../lib/autoCity';
 import { resolveEventOrganizer } from '../lib/organizers';
 import { buildTicketTiers } from '../lib/tickets';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './authContext';
 
 const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'admin@raunaq.com').toLowerCase().trim();
 
@@ -86,6 +86,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const uid = user?.uid;
+
+  useEffect(() => {
+    if (!uid) return;
+    detectAndCacheAutoCity({ preferCache: false }).catch(() => {
+      // Ignore location failures here; screens can still request location later.
+    });
+  }, [uid]);
 
   useEffect(() => {
     if (!db || !uid) {
@@ -356,9 +363,3 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components -- context hook pattern
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GlassSurface from './GlassSurface';
 import './AIChatWidget.css';
 
@@ -15,8 +15,14 @@ export default function AIChatWidget() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const endRef = useRef(null);
 
   const toggleOpen = () => setIsOpen((v) => !v);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages, isLoading, error, isOpen]);
 
   const buildHardcodedReply = (text) => {
     const lowered = text.toLowerCase();
@@ -114,7 +120,7 @@ export default function AIChatWidget() {
   };
 
   return (
-    <div className="ai-chat">
+    <div className={`ai-chat ${isOpen ? 'ai-chat--open' : ''}`}>
       <GlassSurface
         className="ai-chat-toggle-wrap"
         borderRadius={999}
@@ -129,6 +135,7 @@ export default function AIChatWidget() {
           type="button"
           onClick={toggleOpen}
           aria-expanded={isOpen}
+          aria-label="Toggle AI chat"
         >
           <span className="ai-chat-toggle-icon">◎</span>
           <span className="ai-chat-toggle-label">Ask AI</span>
@@ -139,17 +146,10 @@ export default function AIChatWidget() {
         <GlassSurface
           className="ai-chat-panel"
           borderRadius={24}
-          width="min(360px, 90vw)"
+          width="min(390px, 92vw)"
           backgroundOpacity={0.08}
           saturation={1.4}
           displace={0.4}
-          style={{
-            position: 'fixed',
-            right: '1.25rem',
-            bottom: '5.25rem',
-            height: '400px',
-            maxHeight: '70vh',
-          }}
         >
           <div className="ai-chat-panel-inner">
           <div className="ai-chat-header">
@@ -181,6 +181,7 @@ export default function AIChatWidget() {
                 Thinking…
               </div>
             )}
+            <div ref={endRef} />
           </div>
 
           <form className="ai-chat-input-row" onSubmit={handleSubmit}>

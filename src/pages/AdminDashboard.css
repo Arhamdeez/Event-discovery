@@ -90,3 +90,32 @@
   background: var(--color-primary-muted);
   color: var(--color-primary);
 }
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 1.2rem 0 2.5rem;
+  }
+
+  .admin-title {
+    margin-bottom: 1.1rem;
+    font-size: 1.35rem;
+  }
+
+  .admin-section .glass-surface__content {
+    padding: 1rem;
+  }
+
+  .admin-section h2 {
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .admin-table {
+    font-size: 0.84rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 0.65rem 0.55rem;
+  }
+}

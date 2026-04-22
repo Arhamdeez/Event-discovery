@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useLocation, useParams } from 'react-route
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { categories } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK } from '../constants/images';
 import './CreateEvent.css';

@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import './AdminDashboard.css';
 
 const PENDING_EVENTS = [

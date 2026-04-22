@@ -92,7 +92,25 @@
 }
 
 @media (max-width: 560px) {
+  .footer {
+    padding: 2rem 0 1.4rem;
+  }
+
+  .footer-main {
+    gap: 1.1rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .footer-brand {
+    max-width: none;
+  }
+
   .footer-groups {
     grid-template-columns: 1fr;
+  }
+
+  .footer-bottom p {
+    margin-top: 1rem;
+    font-size: 0.8rem;
   }
 }

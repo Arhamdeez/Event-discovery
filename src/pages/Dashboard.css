@@ -17,6 +17,61 @@
   margin-bottom: 1.5rem;
 }
 
+.dashboard-account-card .glass-surface__content,
+.dashboard-auth-card .glass-surface__content {
+  padding: 1rem 1.15rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.dashboard-account-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-account-label {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.dashboard-account-email {
+  margin: 0.15rem 0 0;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.dashboard-auth-card {
+  max-width: 680px;
+  margin: 1rem auto 0;
+}
+
+.dashboard-auth-card-inner {
+  width: 100%;
+}
+
+.dashboard-auth-card-inner h1 {
+  margin: 0 0 0.45rem;
+  font-size: 1.55rem;
+}
+
+.dashboard-auth-card-inner p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-auth-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
 .dashboard-header h1 {
   margin: 0;
   font-size: 1.75rem;
@@ -94,4 +149,53 @@
 .empty-state {
   color: var(--color-text-muted);
   padding: 2rem;
+}
+
+@media (max-width: 640px) {
+  .dashboard-main {
+    padding: 1.2rem 0 2.5rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .dashboard-header .btn {
+    width: 100%;
+  }
+
+  .dashboard-account-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-account-inner .btn {
+    width: 100%;
+  }
+
+  .dashboard-auth-actions .btn {
+    width: 100%;
+  }
+
+  .dashboard-tabs {
+    width: 100% !important;
+  }
+
+  .dashboard-tabs-inner {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tab-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem 0.65rem;
+    font-size: 0.86rem;
+  }
+
+  .dashboard-content .event-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }

@@ -51,6 +51,11 @@
   .event-details-inner {
     grid-template-columns: 1fr;
   }
+
+  .event-details-sidebar {
+    position: static;
+    top: auto;
+  }
 }
 
 .event-details-title {
@@ -249,4 +254,44 @@
 
 .back-link:hover {
   color: var(--color-primary);
+}
+
+@media (max-width: 640px) {
+  .event-banner {
+    height: 220px;
+    margin-bottom: -2.5rem;
+  }
+
+  .event-banner-category {
+    bottom: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+    padding: 0.34rem 0.6rem;
+  }
+
+  .event-details {
+    padding-bottom: 2.25rem;
+  }
+
+  .event-details-title {
+    font-size: 1.45rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .event-details-meta {
+    gap: 0.5rem 0.9rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.92rem;
+  }
+
+  .event-details-body .glass-surface__content,
+  .organizer .glass-surface__content,
+  .sidebar-card .glass-surface__content {
+    padding: 1rem;
+  }
+
+  .ticket-tier-row {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.82rem;
+  }
 }

@@ -60,6 +60,7 @@ body {
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 #root {
@@ -277,6 +278,12 @@ a:hover {
 
 @media (min-width: 768px) {
   .container { padding: 0 2rem; }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.85rem;
+  }
 }
 
 .section {

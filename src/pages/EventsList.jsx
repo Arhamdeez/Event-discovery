@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -48,58 +48,58 @@ function includesQuery(ev, q) {
   return hay.includes(q);
 }
 
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cityTokens(value) {
+  const normalized = normalizeText(value);
+  if (!normalized) return [];
+  const tokens = normalized.split(' ').filter((t) => t.length > 2);
+  const knownCities = [
+    'lahore',
+    'karachi',
+    'islamabad',
+    'peshawar',
+    'rawalpindi',
+    'multan',
+    'quetta',
+    'faisalabad',
+    'hyderabad',
+    'gujranwala',
+    'sialkot',
+  ];
+  const knownMatch = knownCities.find((c) => normalized.includes(c));
+  const merged = knownMatch ? [knownMatch, ...tokens] : tokens;
+  return [...new Set(merged)];
+}
+
 export default function EventsList() {
   const liveEvents = usePublicFirestoreEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sort, setSort] = useState('latest');
-  const { city: autoCity, loading: autoCityLoading } = useAutoCity({ enabled: !searchParams.get('city') });
+  const { city: autoCity, coords: autoCoords, loading: autoCityLoading } = useAutoCity({ enabled: !searchParams.get('city') });
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [city, setCity] = useState(() => searchParams.get('city') || '');
   const [category, setCategory] = useState(() => searchParams.get('category') || '');
   const [dateFilter, setDateFilter] = useState(() => searchParams.get('date') || '');
 
-  useEffect(() => {
-    setQuery(searchParams.get('q') || '');
-    setCity(searchParams.get('city') || '');
-    setCategory(searchParams.get('category') || '');
-    setDateFilter(searchParams.get('date') || '');
-  }, [searchParams]);
-
-  function normalizeText(value) {
-    return String(value || '')
-      .toLowerCase()
-      .replace(/[^a-z\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function cityTokens(value) {
-    const normalized = normalizeText(value);
-    if (!normalized) return [];
-    const tokens = normalized.split(' ').filter((t) => t.length > 2);
-    const knownCities = [
-      'lahore',
-      'karachi',
-      'islamabad',
-      'peshawar',
-      'rawalpindi',
-      'multan',
-      'quetta',
-      'faisalabad',
-      'hyderabad',
-      'gujranwala',
-      'sialkot',
-    ];
-    const knownMatch = knownCities.find((c) => normalized.includes(c));
-    const merged = knownMatch ? [knownMatch, ...tokens] : tokens;
-    return [...new Set(merged)];
-  }
-
-  function isNearbyEvent(event, cityLabel) {
-    const location = normalizeText(event?.location);
-    if (!location) return false;
-    const tokens = cityTokens(cityLabel);
-    return tokens.some((token) => location.includes(token));
+  function haversineKm(a, b) {
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lon - a.lon);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const x =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    return R * c;
   }
 
   const filteredEvents = useMemo(() => {
@@ -142,14 +142,37 @@ export default function EventsList() {
   }, [query, city, category, dateFilter, sort, liveEvents]);
 
   const referenceCity = city.trim() || autoCity.trim();
+  const nearbyRadiusKm = 5;
   const splitByLocation = useMemo(() => {
-    if (!referenceCity) {
+    const isNearbyEvent = (event, cityLabel) => {
+      const location = normalizeText(event?.location);
+      if (!location) return false;
+      const tokens = cityTokens(cityLabel);
+      return tokens.some((token) => location.includes(token));
+    };
+
+    const hasCoords = Boolean(autoCoords?.lat && autoCoords?.lon && !city.trim());
+    if (!referenceCity && !hasCoords) {
       return { nearbyEvents: [], remainingEvents: filteredEvents };
     }
-    const nearbyEvents = filteredEvents.filter((ev) => isNearbyEvent(ev, referenceCity));
-    const remainingEvents = filteredEvents.filter((ev) => !isNearbyEvent(ev, referenceCity));
+    const nearbyEvents = filteredEvents.filter((ev) => {
+      if (hasCoords) {
+        const evLat = Number(ev?.lat);
+        const evLon = Number(ev?.lon);
+        if (!Number.isFinite(evLat) || !Number.isFinite(evLon)) return false;
+        const d = haversineKm(
+          { lat: autoCoords.lat, lon: autoCoords.lon },
+          { lat: evLat, lon: evLon },
+        );
+        return d <= nearbyRadiusKm;
+      }
+      if (referenceCity) return isNearbyEvent(ev, referenceCity);
+      return false;
+    });
+    const nearbyIds = new Set(nearbyEvents.map((e) => String(e.id)));
+    const remainingEvents = filteredEvents.filter((ev) => !nearbyIds.has(String(ev.id)));
     return { nearbyEvents, remainingEvents };
-  }, [filteredEvents, referenceCity]);
+  }, [filteredEvents, referenceCity, autoCoords, city]);
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -239,10 +262,10 @@ export default function EventsList() {
                 </select>
               </div>
             </div>
-            {referenceCity ? (
+            {referenceCity || (autoCoords?.lat && autoCoords?.lon) ? (
               <>
                 <div className="events-split-head">
-                  <h2>Events near {referenceCity}</h2>
+                  <h2>Events near {referenceCity || 'your location'} (within {nearbyRadiusKm} km)</h2>
                   {autoCityLoading ? <span>Detecting your location…</span> : null}
                 </div>
                 <div className="event-grid">

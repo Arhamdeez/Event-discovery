@@ -77,6 +77,8 @@ export const mockEventsList = [
     organizerName: 'Model Town Sports Club',
     organizerEmail: 'mtsc.lhr@gmail.com',
     organizerInitial: 'M',
+    lat: 31.4822,
+    lon: 74.3236,
   },
   {
     id: '5',
@@ -141,6 +143,8 @@ export const mockEventsList = [
     organizerName: 'Lahore Heritage Walks',
     organizerEmail: 'walks@lahoreheritage.pk',
     organizerInitial: 'H',
+    lat: 31.5825,
+    lon: 74.3248,
   },
   {
     id: '9',
@@ -173,6 +177,8 @@ export const mockEventsList = [
     organizerName: 'Alhamra Cultural Society',
     organizerEmail: 'events@alhamra.org.pk',
     organizerInitial: 'A',
+    lat: 31.5537,
+    lon: 74.3335,
   },
   {
     id: '11',
@@ -205,6 +211,60 @@ export const mockEventsList = [
     organizerName: 'Sea Breeze Events',
     organizerEmail: 'hello@seabreeze.pk',
     organizerInitial: 'C',
+  },
+  {
+    id: '13',
+    title: 'Valencia Community Night Run',
+    date: 'Apr 23, 2026',
+    time: '7:00 PM',
+    location: 'Valencia Town Main Boulevard, Lahore',
+    category: 'Sports',
+    attendeeCount: 64,
+    image:
+      'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&h=480&fit=crop&q=80',
+    description:
+      'An easy-paced 5K social run around Valencia with hydration stops and post-run chai. Open to beginners and regular runners.',
+    organizerName: 'Valencia Runners Circle',
+    organizerEmail: 'run@valenciacircle.pk',
+    organizerInitial: 'V',
+    lat: 31.3751,
+    lon: 74.2532,
+  },
+  {
+    id: '14',
+    title: 'Lake City Pine Avenue Open Mic',
+    date: 'Apr 25, 2026',
+    time: '8:00 PM',
+    location: 'Pine Avenue, Lake City, Lahore',
+    category: 'Arts',
+    attendeeCount: 92,
+    image:
+      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=800&h=480&fit=crop&q=80',
+    description:
+      'Live poetry, acoustic sets, and stand-up snippets by local creators. Family-friendly seating with food trucks on Pine Avenue.',
+    organizerName: 'Lake City Culture Hub',
+    organizerEmail: 'hello@lakecityculture.pk',
+    organizerInitial: 'L',
+    lat: 31.3652,
+    lon: 74.2443,
+  },
+  {
+    id: '15',
+    title: 'Ameerpura Evening Family Food Mela',
+    date: 'Apr 27, 2026',
+    time: '6:30 PM',
+    location: 'Ameerpura Main Road, Lahore',
+    category: 'Food',
+    attendeeCount: 58,
+    image:
+      'https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?w=800&h=480&fit=crop&q=80',
+    description:
+      'Street-food popups, chai stalls, and local dessert counters in Ameerpura with light live music and family seating.',
+    organizerName: 'Ameerpura Community Circle',
+    organizerEmail: 'hello@ameerpuraevents.pk',
+    organizerInitial: 'A',
+    lat: 31.5694,
+    lon: 74.2946,
   },
 ];
 
