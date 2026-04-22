@@ -17,8 +17,26 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.auth != null
         && request.resource.data.organizerId == request.auth.uid;
-      allow update, delete: if request.auth != null
+      allow delete: if request.auth != null
         && resource.data.organizerId == request.auth.uid;
+
+      // Organizer can edit full event details.
+      allow update: if request.auth != null
+        && resource.data.organizerId == request.auth.uid;
+
+      // Any signed-in user can RSVP by incrementing attendeeCount only.
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['attendeeCount', 'updatedAt'])
+        && request.resource.data.attendeeCount is int
+        && (
+          request.resource.data.attendeeCount
+            == ((resource.data.attendeeCount is int) ? resource.data.attendeeCount : 0) + 1
+          || (
+            ((resource.data.attendeeCount is int) ? resource.data.attendeeCount : 0) > 0
+            && request.resource.data.attendeeCount
+              == ((resource.data.attendeeCount is int) ? resource.data.attendeeCount : 0) - 1
+          )
+        );
     }
   }
 }

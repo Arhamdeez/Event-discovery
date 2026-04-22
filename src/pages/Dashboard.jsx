@@ -106,7 +106,14 @@ export default function Dashboard() {
             {activeTab === 'created' && (
               <div className="event-grid">
                 {displayCreatedEvents.length ? displayCreatedEvents.map((ev) => (
-                  <EventCard key={ev.id} event={ev} />
+                  <div key={ev.id} className="dashboard-event-tile">
+                    <EventCard event={ev} />
+                    <div className="dashboard-event-actions">
+                      <Link to={`/events/${ev.id}/edit`} className="btn btn-ghost btn-sm">
+                        Edit
+                      </Link>
+                    </div>
+                  </div>
                 )) : (
                   <p className="empty-state">You haven&apos;t created any events yet. <Link to="/events/new">Create one</Link>.</p>
                 )}

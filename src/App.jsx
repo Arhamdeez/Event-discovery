@@ -12,6 +12,9 @@ const SignUp = lazy(() => import('./pages/SignUp'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const CreateEvent = lazy(() => import('./pages/CreateEvent'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Privacy = lazy(() => import('./pages/Privacy'));
 
 const AIChatWidget = lazy(() => import('./components/AIChatWidget'));
 
@@ -78,11 +81,15 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/events" element={<EventsList />} />
               <Route path="/events/new" element={<CreateEvent />} />
+              <Route path="/events/:id/edit" element={<CreateEvent />} />
               <Route path="/events/:id" element={<EventDetails />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

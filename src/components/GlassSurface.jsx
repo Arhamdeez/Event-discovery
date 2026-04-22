@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
 import './GlassSurface.css';
 
@@ -7,26 +6,17 @@ const GlassSurface = ({
   width = '100%',
   height = '100%',
   borderRadius = 20,
-  borderWidth = 0.07,
-  brightness = 50,
-  opacity = 0.975,
   blur = 9,
-  displace = 0,
   backgroundOpacity = 0.12,
   saturation = 1.15,
-  distortionScale = -180,
-  redOffset = 0,
-  greenOffset = 10,
-  blueOffset = 20,
-  xChannel = 'R',
-  yChannel = 'G',
-  mixBlendMode = 'normal',
   className = '',
   style = {},
+  ...legacyProps
 }) => {
   // NOTE: This component intentionally avoids SVG displacement/backdrop-filter urls
   // because they are expensive and can cause scroll jank on many devices.
   // Keep props for API compatibility, but use a simpler, cheaper “glass” effect.
+  void legacyProps;
   const containerStyle = useMemo(() => ({
     ...style,
     width: typeof width === 'number' ? `${width}px` : width,
@@ -34,7 +24,8 @@ const GlassSurface = ({
     borderRadius: `${borderRadius}px`,
     '--glass-frost': backgroundOpacity,
     '--glass-saturation': saturation,
-  }), [style, width, height, borderRadius, backgroundOpacity, saturation]);
+    '--glass-blur': `${Math.min(12, Math.max(6, Number(blur) || 8))}px`,
+  }), [style, width, height, borderRadius, backgroundOpacity, saturation, blur]);
 
   return (
     <div

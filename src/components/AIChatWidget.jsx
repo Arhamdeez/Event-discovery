@@ -14,6 +14,7 @@ export default function AIChatWidget() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const toggleOpen = () => setIsOpen((v) => !v);
 
@@ -61,6 +62,7 @@ export default function AIChatWidget() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
+    setError('');
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -71,10 +73,22 @@ export default function AIChatWidget() {
     setInput('');
     setIsLoading(true);
 
-    const replyText = buildHardcodedReply(trimmed);
+    try {
+      const nextMessages = [...messages, userMessage].map(({ role, content }) => ({ role, content }));
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: nextMessages }),
+      });
 
-    // Small delay to feel like "thinking"
-    setTimeout(() => {
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => null);
+        throw new Error(data?.error || 'AI server error');
+      }
+
+      const data = await resp.json().catch(() => null);
+      const replyText = data?.reply || buildHardcodedReply(trimmed);
+
       setMessages((prev) => [
         ...prev,
         {
@@ -83,8 +97,20 @@ export default function AIChatWidget() {
           content: replyText,
         },
       ]);
+    } catch (err) {
+      setError(err?.message || 'AI is unavailable right now. Using demo mode.');
+      const replyText = buildHardcodedReply(trimmed);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString() + '-assistant',
+          role: 'assistant',
+          content: replyText,
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -145,6 +171,11 @@ export default function AIChatWidget() {
                 {m.content}
               </div>
             ))}
+            {error ? (
+              <div className="ai-chat-message ai-chat-message--assistant ai-chat-message--typing">
+                {error}
+              </div>
+            ) : null}
             {isLoading && (
               <div className="ai-chat-message ai-chat-message--assistant ai-chat-message--typing">
                 Thinking…

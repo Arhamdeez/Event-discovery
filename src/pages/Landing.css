@@ -118,12 +118,12 @@
 }
 
 .hero-search {
-  max-width: 640px;
+  max-width: min(96vw, 980px);
   margin: 0 auto;
 }
 
 .hero-search .glass-surface__content {
-  padding: 0.5rem;
+  padding: 0.75rem;
   align-items: stretch;
   justify-content: stretch;
 }
@@ -135,8 +135,18 @@
 .search-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.5rem;
+  gap: 0.7rem;
   align-items: center;
+  padding: 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(12, 12, 16, 0.62) 0%,
+    rgba(24, 24, 27, 0.42) 45%,
+    rgba(12, 12, 16, 0.62) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .search-input,
@@ -146,20 +156,71 @@
   min-width: 0;
 }
 
+.hero-search .search-input,
+.hero-search .search-select,
+.hero-search .search-date {
+  height: 50px;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  background: rgba(6, 6, 10, 0.72);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: rgba(244, 244, 248, 0.98);
+  font-size: 1.02rem;
+}
+
+.hero-search .search-input::placeholder {
+  color: rgba(226, 226, 235, 0.72);
+}
+
+.hero-search .search-input:focus,
+.hero-search .search-select:focus,
+.hero-search .search-date:focus {
+  border-color: rgba(212, 212, 216, 0.7);
+  box-shadow:
+    0 0 0 3px rgba(161, 161, 170, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hero-search .search-date {
+  color-scheme: dark;
+}
+
 .search-date {
-  min-width: 140px;
+  min-width: 170px;
 }
 
 .search-row .btn {
   flex: 0 0 auto;
   margin-left: auto;
   white-space: nowrap;
+  height: 50px;
+  border-radius: 999px;
+  padding-inline: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 900px) {
+  .search-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-radius: 24px;
+  }
+  .search-row .btn {
+    width: 100%;
+    margin-left: 0;
+    grid-column: span 3;
+  }
 }
 
 @media (max-width: 640px) {
   .search-row {
     flex-direction: column;
+    display: flex;
     flex-wrap: wrap;
+    border-radius: 24px;
   }
   .search-input, .search-select, .search-date {
     width: 100%;

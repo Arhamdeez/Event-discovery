@@ -3,6 +3,11 @@
   padding: 2rem 0 4rem;
 }
 
+.admin-main .container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
 .admin-title {
   margin-bottom: 2rem;
   font-size: 1.75rem;

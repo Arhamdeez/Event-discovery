@@ -6,14 +6,18 @@ import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/AuthContext';
 import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK } from '../constants/images';
-import { doc, getDoc } from 'firebase/firestore';
+import { buildTicketTiers } from '../lib/tickets';
+import { resolveEventOrganizer } from '../lib/organizers';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
-  const { isLoggedIn, attendEvent, attendedEventIds, createdEvents } = useAuth();
+  const { user, isLoggedIn, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
   const [attendError, setAttendError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [selectedTier, setSelectedTier] = useState('');
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [remoteLoaded, setRemoteLoaded] = useState(false);
 
@@ -27,42 +31,48 @@ export default function EventDetails() {
       });
       return undefined;
     }
-    const local = getEventById(id) || createdEvents.find((e) => e.id === id);
-    if (local) {
-      queueMicrotask(() => {
-        setRemoteLoaded(true);
-        setRemoteEvent(null);
-      });
-      return undefined;
-    }
     queueMicrotask(() => setRemoteLoaded(false));
-    let alive = true;
-    getDoc(doc(db, 'events', id))
-      .then((snap) => {
-        if (!alive) return;
+    return onSnapshot(
+      doc(db, 'events', id),
+      (snap) => {
         setRemoteLoaded(true);
-        if (snap.exists()) setRemoteEvent({ id: snap.id, ...snap.data() });
-        else setRemoteEvent(null);
-      })
-      .catch(() => {
-        if (!alive) return;
+        setRemoteEvent(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      },
+      () => {
         setRemoteLoaded(true);
         setRemoteEvent(null);
-      });
-    return () => {
-      alive = false;
-    };
+      },
+    );
   }, [id, createdEvents]);
 
-  const event = localEvent || remoteEvent;
+  const event = remoteEvent ? { ...localEvent, ...remoteEvent } : localEvent;
   const primaryUrl = event?.image || EVENT_IMAGE_FALLBACK;
   const [bannerSrc, setBannerSrc] = useState(primaryUrl);
   const isAttending = event && attendedEventIds.includes(event.id);
+  const canEdit = Boolean(event && createdEvents.some((e) => String(e.id) === String(event.id)));
+  const ticketTiers = event?.ticketTiers?.length ? event.ticketTiers : buildTicketTiers(event);
+  const organizer = resolveEventOrganizer(event);
+
+  const handleGetTicket = () => {
+    if (!selectedTier) {
+      setAttendError('Select a ticket tier first.');
+      return;
+    }
+    const params = new URLSearchParams({
+      event: String(event?.title || 'event'),
+      tier: selectedTier,
+    });
+    window.location.assign(`https://bookme.com?${params.toString()}`);
+  };
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect -- sync banner with resolved image URL */
     setBannerSrc(primaryUrl);
   }, [primaryUrl, id]);
+
+  useEffect(() => {
+    if (!isAttending) setSelectedTier('');
+  }, [isAttending, event?.id]);
 
   if (!event && !remoteLoaded) {
     return (
@@ -112,6 +122,13 @@ export default function EventDetails() {
               <span>{event.time}</span>
               <span>{event.location}</span>
             </div>
+            {canEdit ? (
+              <div style={{ margin: '0.75rem 0 1.25rem' }}>
+                <Link to={`/events/${event.id}/edit`} className="btn btn-ghost">
+                  Edit this event
+                </Link>
+              </div>
+            ) : null}
             <GlassSurface
               className="event-details-body"
               borderRadius={20}
@@ -142,13 +159,16 @@ export default function EventDetails() {
                 <h3>Organizer</h3>
                 <div className="organizer-info">
                   <div className="organizer-avatar">
-                    {(event.organizerInitial || event.organizerName || 'R').toString().charAt(0).toUpperCase()}
+                    {organizer.organizerInitial}
                   </div>
                   <div>
-                    <strong>{event.organizerName || 'Raunaq Host'}</strong>
-                    <span className="organizer-email">
-                      {event.organizerEmail || 'events@raunaq.app'}
-                    </span>
+                    <strong>{organizer.organizerName}</strong>
+                    <a
+                      className="organizer-email"
+                      href={`mailto:${organizer.organizerEmail}`}
+                    >
+                      {organizer.organizerEmail}
+                    </a>
                   </div>
                 </div>
               </div>
@@ -168,12 +188,70 @@ export default function EventDetails() {
                 <p className="attendee-count">
                   <strong>{event.attendeeCount ?? 0}</strong> attending
                 </p>
+                {event.ticketName || event.ticketPrice != null ? (
+                  <p className="ticket-summary">
+                    <strong>{event.ticketName || 'Ticket'}</strong>
+                    {event.ticketPrice != null ? ` · PKR ${event.ticketPrice}` : ''}
+                  </p>
+                ) : null}
+                <div className="ticket-tiers">
+                  {ticketTiers.map((tier) => (
+                    <div key={tier.segment} className="ticket-tier-row">
+                      <label className="ticket-tier-check">
+                        <input
+                          type="checkbox"
+                          checked={selectedTier === tier.segment}
+                          disabled={!isAttending}
+                          onChange={() => {
+                            setAttendError('');
+                            setSelectedTier((prev) => (prev === tier.segment ? '' : tier.segment));
+                          }}
+                        />
+                        <span>{tier.segment}</span>
+                      </label>
+                      <strong>PKR {tier.price}</strong>
+                    </div>
+                  ))}
+                </div>
                 {!isLoggedIn ? (
                   <Link to="/login" className="btn btn-primary btn-lg" style={{ width: '100%', textAlign: 'center', display: 'block' }}>
                     Sign in to attend
                   </Link>
                 ) : isAttending ? (
-                  <p className="attending-badge">You&apos;re attending</p>
+                  <>
+                    <p className="attending-badge">You&apos;re attending</p>
+                    {selectedTier ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-lg"
+                        style={{ width: '100%' }}
+                        onClick={handleGetTicket}
+                      >
+                        Get ticket
+                      </button>
+                    ) : (
+                      <p className="ticket-hint">Select one ticket tier to unlock Get ticket.</p>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-lg"
+                      style={{ width: '100%' }}
+                      disabled={actionLoading}
+                      onClick={async () => {
+                        setAttendError('');
+                        setActionLoading(true);
+                        try {
+                          await leaveEvent(event.id);
+                        } catch (err) {
+                          setAttendError(err.message || 'Could not remove attendance.');
+                        } finally {
+                          setActionLoading(false);
+                        }
+                      }}
+                    >
+                      Remove me from event
+                    </button>
+                  </>
                 ) : (
                   <>
                     {attendError ? <p className="auth-error" role="alert" style={{ marginBottom: '0.75rem' }}>{attendError}</p> : null}
@@ -181,16 +259,20 @@ export default function EventDetails() {
                       type="button"
                       className="btn btn-primary btn-lg"
                       style={{ width: '100%' }}
+                      disabled={actionLoading}
                       onClick={async () => {
                         setAttendError('');
+                        setActionLoading(true);
                         try {
-                          await attendEvent(event.id);
+                          await attendEvent(event);
                         } catch (err) {
                           setAttendError(err.message || 'Could not save RSVP.');
+                        } finally {
+                          setActionLoading(false);
                         }
                       }}
                     >
-                      Attend event
+                      {actionLoading ? 'Please wait…' : 'Attend event'}
                     </button>
                   </>
                 )}

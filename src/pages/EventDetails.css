@@ -168,6 +168,63 @@
   color: var(--color-text-secondary);
 }
 
+.ticket-summary {
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.ticket-tiers {
+  width: 100%;
+  margin: 0 0 1rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ticket-tier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.ticket-tier-row strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.ticket-tier-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: inherit;
+}
+
+.ticket-tier-check input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary-light);
+}
+
+.ticket-tier-row + .ticket-tier-row {
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.ticket-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
 .sidebar-card .btn {
   margin-bottom: 1rem;
 }

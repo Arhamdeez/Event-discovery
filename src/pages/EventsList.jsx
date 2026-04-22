@@ -52,7 +52,7 @@ export default function EventsList() {
   const liveEvents = usePublicFirestoreEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sort, setSort] = useState('latest');
-  const { city: autoCity } = useAutoCity({ enabled: !searchParams.get('city') });
+  const { city: autoCity, loading: autoCityLoading } = useAutoCity({ enabled: !searchParams.get('city') });
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [city, setCity] = useState(() => searchParams.get('city') || '');
   const [category, setCategory] = useState(() => searchParams.get('category') || '');
@@ -65,10 +65,42 @@ export default function EventsList() {
     setDateFilter(searchParams.get('date') || '');
   }, [searchParams]);
 
-  useEffect(() => {
-    if (!city.trim() && autoCity) setCity(autoCity);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCity]);
+  function normalizeText(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function cityTokens(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return [];
+    const tokens = normalized.split(' ').filter((t) => t.length > 2);
+    const knownCities = [
+      'lahore',
+      'karachi',
+      'islamabad',
+      'peshawar',
+      'rawalpindi',
+      'multan',
+      'quetta',
+      'faisalabad',
+      'hyderabad',
+      'gujranwala',
+      'sialkot',
+    ];
+    const knownMatch = knownCities.find((c) => normalized.includes(c));
+    const merged = knownMatch ? [knownMatch, ...tokens] : tokens;
+    return [...new Set(merged)];
+  }
+
+  function isNearbyEvent(event, cityLabel) {
+    const location = normalizeText(event?.location);
+    if (!location) return false;
+    const tokens = cityTokens(cityLabel);
+    return tokens.some((token) => location.includes(token));
+  }
 
   const filteredEvents = useMemo(() => {
     let list = mergeLiveWithMock(liveEvents, mockEventsList);
@@ -108,6 +140,16 @@ export default function EventsList() {
     }
     return list;
   }, [query, city, category, dateFilter, sort, liveEvents]);
+
+  const referenceCity = city.trim() || autoCity.trim();
+  const splitByLocation = useMemo(() => {
+    if (!referenceCity) {
+      return { nearbyEvents: [], remainingEvents: filteredEvents };
+    }
+    const nearbyEvents = filteredEvents.filter((ev) => isNearbyEvent(ev, referenceCity));
+    const remainingEvents = filteredEvents.filter((ev) => !isNearbyEvent(ev, referenceCity));
+    return { nearbyEvents, remainingEvents };
+  }, [filteredEvents, referenceCity]);
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -149,7 +191,7 @@ export default function EventsList() {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Lahore, Karachi, Islamabad"
+                  placeholder={autoCity ? `Detected: ${autoCity} (or type your city)` : 'e.g. Lahore, Karachi, Islamabad'}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 />
@@ -197,15 +239,46 @@ export default function EventsList() {
                 </select>
               </div>
             </div>
-            <div className="event-grid">
-              {filteredEvents.length > 0 ? (
-                filteredEvents.map((ev) => (
-                  <EventCard key={ev.id} event={ev} />
-                ))
-              ) : (
-                <p className="events-empty">No events match your search. Try different filters or <button type="button" className="btn btn-ghost" onClick={() => { setQuery(''); setCity(''); setCategory(''); setDateFilter(''); setSearchParams(''); }}>clear filters</button>.</p>
-              )}
-            </div>
+            {referenceCity ? (
+              <>
+                <div className="events-split-head">
+                  <h2>Events near {referenceCity}</h2>
+                  {autoCityLoading ? <span>Detecting your location…</span> : null}
+                </div>
+                <div className="event-grid">
+                  {splitByLocation.nearbyEvents.length > 0 ? (
+                    splitByLocation.nearbyEvents.map((ev) => (
+                      <EventCard key={ev.id} event={ev} />
+                    ))
+                  ) : (
+                    <p className="events-empty">No nearby events found right now.</p>
+                  )}
+                </div>
+
+                <div className="events-split-head">
+                  <h2>Other events</h2>
+                </div>
+                <div className="event-grid">
+                  {splitByLocation.remainingEvents.length > 0 ? (
+                    splitByLocation.remainingEvents.map((ev) => (
+                      <EventCard key={ev.id} event={ev} />
+                    ))
+                  ) : (
+                    <p className="events-empty">No remaining events found.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="event-grid">
+                {filteredEvents.length > 0 ? (
+                  filteredEvents.map((ev) => (
+                    <EventCard key={ev.id} event={ev} />
+                  ))
+                ) : (
+                  <p className="events-empty">No events match your search. Try different filters or <button type="button" className="btn btn-ghost" onClick={() => { setQuery(''); setCity(''); setCategory(''); setDateFilter(''); setSearchParams(''); }}>clear filters</button>.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -6,10 +6,25 @@ A modern **liquid glass** web UI for a local event discovery platform (students 
 
 ```bash
 npm install
+```
+
+Create a local env file:
+
+```bash
+cp .env.example .env
+```
+
+Fill in `GEMINI_API_KEY` and your `VITE_FIREBASE_*` keys, then run:
+
+```bash
+# Terminal 1 (Gemini backend)
+npm run server
+
+# Terminal 2 (Vite frontend)
 npm run dev
 ```
 
-Open **http://localhost:5173**
+Open **http://localhost:5173** (the frontend proxies `/api/*` to the backend).
 
 ## Pages
 

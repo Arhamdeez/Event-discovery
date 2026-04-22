@@ -1,7 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Load env vars (prefer local overrides)
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -52,7 +56,22 @@ app.post('/api/chat', async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error('Gemini chat error', err);
-    res.status(500).json({ error: 'Gemini chat failed' });
+    const status = Number(err?.status) || 500;
+    const retryAfterSeconds = Number(err?.errorDetails?.find?.((d) => d?.retryDelay)?.retryDelay?.replace?.('s', '')) || null;
+    const message =
+      err?.status === 429
+        ? 'Gemini quota exceeded for this API key/project. Enable billing / quota in Google AI Studio / Google Cloud, then retry.'
+        : 'Gemini chat failed';
+
+    if (retryAfterSeconds) {
+      res.setHeader('Retry-After', String(Math.ceil(retryAfterSeconds)));
+    }
+
+    res.status(status).json({
+      error: message,
+      status,
+      retryAfterSeconds,
+    });
   }
 });
 

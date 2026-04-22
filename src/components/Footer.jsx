@@ -6,20 +6,40 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-bg" />
       <div className="container footer-inner">
-        <div className="footer-top">
-          <Link to="/" className="footer-logo">
-            Raunaq
-          </Link>
-          <nav className="footer-links">
-            <Link to="/events">Explore</Link>
-            <Link to="/#categories">Categories</Link>
-            <Link to="/about">About</Link>
-            <Link to="/contact">Contact</Link>
-            <Link to="/privacy">Privacy</Link>
+        <div className="footer-main">
+          <div className="footer-brand">
+            <Link to="/" className="footer-logo">
+              Raunaq
+            </Link>
+            <p className="footer-about">
+              Discover local events, communities, and experiences in one simple place.
+            </p>
+          </div>
+
+          <nav className="footer-groups" aria-label="Footer">
+            <div className="footer-group">
+              <h3>Company</h3>
+              <Link to="/about">About Us</Link>
+              <Link to="/contact">Contact</Link>
+            </div>
+            <div className="footer-group">
+              <h3>Explore</h3>
+              <Link to="/events">Events</Link>
+              <Link to="/events/new">Host an Event</Link>
+            </div>
+            <div className="footer-group">
+              <h3>Account</h3>
+              <Link to="/login">Login</Link>
+              <Link to="/signup">Sign Up</Link>
+            </div>
+            <div className="footer-group">
+              <h3>Legal</h3>
+              <Link to="/privacy">Privacy</Link>
+            </div>
           </nav>
         </div>
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Raunaq. For students & communities.</p>
+          <p>© {new Date().getFullYear()} Raunaq. Built for students and communities.</p>
         </div>
       </div>
     </footer>

@@ -9,6 +9,11 @@
   padding: 4rem 0 3rem;
 }
 
+.static-page-main .container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
 .static-page-container {
   display: grid;
   place-items: center;
