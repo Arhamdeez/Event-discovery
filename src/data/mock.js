@@ -6,7 +6,7 @@ export const categories = [
   { id: 5, name: 'Arts', slug: 'arts', icon: '◇' },
   { id: 6, name: 'Food', slug: 'food', icon: '◎' },
   { id: 7, name: 'Community', slug: 'community', icon: '◉' },
-  { id: 8, name: 'Culture & Heritage', slug: 'culture', icon: '۞' },
+  { id: 8, name: 'Culture', slug: 'culture', icon: '۞' },
 ];
 
 export const mockFeaturedEvents = [
@@ -132,7 +132,7 @@ export const mockEventsList = [
     date: 'Apr 8, 2026',
     time: '9:00 AM',
     location: 'Wazir Khan Mosque, Old Lahore',
-    category: 'Culture & Heritage',
+    category: 'Culture',
     attendeeCount: 42,
     image:
       'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=800&h=480&fit=crop&q=80',
@@ -164,7 +164,7 @@ export const mockEventsList = [
     date: 'Apr 14, 2026',
     time: '8:00 PM',
     location: 'Alhamra Arts Council, The Mall Road, Lahore',
-    category: 'Culture & Heritage',
+    category: 'Culture',
     attendeeCount: 132,
     image:
       'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=480&fit=crop&q=80',

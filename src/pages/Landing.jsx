@@ -7,6 +7,7 @@ import GlassSurface from '../components/GlassSurface';
 import TextPressure from '../components/TextPressure';
 import { mockFeaturedEvents, categories } from '../data/mock';
 import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
+import { useAutoCity } from '../hooks/useAutoCity';
 import './Landing.css';
 
 function mergeFeatured(live, mock) {
@@ -18,13 +19,24 @@ export default function Landing() {
   const liveEvents = usePublicFirestoreEvents();
   const { hash } = useLocation();
   const navigate = useNavigate();
+  const { city: autoCity } = useAutoCity();
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchCity, setSearchCity] = useState('');
   const [searchCategory, setSearchCategory] = useState('');
   const [searchDate, setSearchDate] = useState('');
 
+  useEffect(() => {
+    // Autofill city/area only if user hasn't typed anything yet.
+    if (!searchCity.trim() && autoCity) {
+      setSearchCity(autoCity);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCity]);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
     if (searchCity.trim()) params.set('city', searchCity.trim());
     if (searchCategory) params.set('category', searchCategory);
     if (searchDate) params.set('date', searchDate);
@@ -85,6 +97,13 @@ export default function Landing() {
           >
             <form className="hero-search-form" onSubmit={handleSearchSubmit}>
               <div className="search-row">
+                <input
+                  type="text"
+                  className="input search-input"
+                  placeholder="Search events (e.g. football, concert)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
                 <input
                   type="text"
                   className="input search-input"
@@ -151,7 +170,9 @@ export default function Landing() {
                 className="category-card-wrap"
               >
                 <Link to={`/events?category=${cat.slug}`} className="category-card">
-                  <span className="category-icon">{cat.icon}</span>
+                  <span className={`category-icon ${cat.slug === 'culture' ? 'category-icon--culture' : ''}`}>
+                    {cat.icon}
+                  </span>
                   <span className="category-name">{cat.name}</span>
                 </Link>
               </GlassSurface>
