@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
-import { auth, db } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import './AdminDashboard.css';
 
 function millis(value) {
@@ -106,57 +106,6 @@ export default function AdminDashboard() {
         );
       }
       await batch.commit();
-      if (nextStatus === 'approved' && auth?.currentUser && event.organizerId) {
-        try {
-          const idToken = await auth.currentUser.getIdToken();
-          const response = await fetch('/api/notify-approved-event', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${idToken}`,
-            },
-            body: JSON.stringify({
-              eventId: event.id,
-              organizerId: String(event.organizerId),
-              organizerName: event.organizerName || '',
-              title: event.title || 'Untitled event',
-              date: event.date || '',
-              time: event.time || '',
-              location: event.location || '',
-            }),
-          });
-          if (!response.ok) {
-            const bodyText = await response.text();
-            let payload = {};
-            try {
-              payload = bodyText ? JSON.parse(bodyText) : {};
-            } catch {
-              payload = {};
-            }
-            throw new Error(
-              payload.error
-                || bodyText
-                || `Notification request failed (HTTP ${response.status}).`,
-            );
-          }
-          const notifyPayload = await response.json().catch(() => ({}));
-          const sent = Number(notifyPayload.sent || 0);
-          const failed = Number(notifyPayload.failed || 0);
-          const reason = String(notifyPayload.reason || '');
-          if (failed > 0) {
-            throw new Error(
-              `Email delivery failed for ${failed} recipient(s). Sent: ${sent}. ${reason}`.trim(),
-            );
-          }
-          if (sent === 0) {
-            throw new Error(
-              reason || 'No emails were sent. Verify that the organizer has followers with email addresses.',
-            );
-          }
-        } catch (notifyErr) {
-          setActionError(`Event approved, but email notification failed: ${notifyErr.message || 'unknown error.'}`);
-        }
-      }
     } catch (err) {
       setActionError(err.message || 'Could not update review status.');
     } finally {

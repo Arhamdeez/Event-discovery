@@ -8,9 +8,16 @@ import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK, getEventImageByCategory } from '../constants/images';
 import { buildTicketTiers } from '../lib/tickets';
 import { resolveEventOrganizer } from '../lib/organizers';
-import { collection, doc, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import './EventDetails.css';
+
+function formatChatTime(value) {
+  if (!value) return '';
+  const date = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -34,6 +41,10 @@ export default function EventDetails() {
   const [selectedTier, setSelectedTier] = useState('');
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [remoteLoaded, setRemoteLoaded] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState('');
 
   const localEvent = id ? getEventById(id) || createdEvents.find((e) => e.id === id) : null;
 
@@ -95,6 +106,34 @@ export default function EventDetails() {
   useEffect(() => {
     setFollowError('');
   }, [event?.id]);
+
+  useEffect(() => {
+    setChatError('');
+    if (!db || !event?.id || !isLoggedIn || !isAttending) {
+      setChatMessages([]);
+      return undefined;
+    }
+    const messagesQuery = query(
+      collection(db, 'events', event.id, 'messages'),
+      orderBy('createdAt', 'asc'),
+      limit(200),
+    );
+    return onSnapshot(
+      messagesQuery,
+      (snap) => {
+        setChatMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => {
+        if (err?.code === 'permission-denied') {
+          setChatMessages([]);
+          setChatError('Chat permission denied. Publish the latest Firestore rules to enable real event chat.');
+          return;
+        }
+        setChatMessages([]);
+        setChatError('Could not load chat messages.');
+      },
+    );
+  }, [event?.id, isLoggedIn, isAttending]);
 
   useEffect(() => {
     if (!db || !organizerId) {
@@ -252,6 +291,78 @@ export default function EventDetails() {
                 ) : null}
               </div>
             </GlassSurface>
+            {isAttending ? (
+              <GlassSurface
+                className="event-chat"
+                borderRadius={20}
+                width="100%"
+                backgroundOpacity={0.06}
+                saturation={1.4}
+                displace={0.35}
+                style={{ height: 'auto', marginTop: '1.5rem' }}
+              >
+                <div className="event-chat-inner">
+                  <h3>Event chat</h3>
+                  {chatError ? <p className="auth-error" role="alert">{chatError}</p> : null}
+                  <div className="event-chat-messages">
+                    {chatMessages.length === 0 ? (
+                      <p className="event-chat-empty">No messages yet. Start the conversation.</p>
+                    ) : (
+                      chatMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`event-chat-message ${message.uid === user?.uid ? 'event-chat-message--mine' : ''}`}
+                        >
+                          <div className="event-chat-message-head">
+                            <strong>{message.senderName || 'Attendee'}</strong>
+                            <span>{formatChatTime(message.createdAt)}</span>
+                          </div>
+                          <p>{message.text}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <form
+                    className="event-chat-form"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!event?.id || !isAttending) return;
+                      const text = chatInput.trim();
+                      if (!text || chatLoading) return;
+                      setChatError('');
+                      setChatLoading(true);
+                      try {
+                        await addDoc(collection(db, 'events', event.id, 'messages'), {
+                          uid: user?.uid || '',
+                          senderName: user?.email ? user.email.split('@')[0] : 'Attendee',
+                          senderEmail: user?.email || '',
+                          text,
+                          createdAt: serverTimestamp(),
+                          updatedAt: serverTimestamp(),
+                        });
+                        setChatInput('');
+                      } catch (err) {
+                        setChatError(err.message || 'Could not send message.');
+                      } finally {
+                        setChatLoading(false);
+                      }
+                    }}
+                  >
+                    <input
+                      className="input"
+                      type="text"
+                      placeholder="Write a message…"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      maxLength={800}
+                    />
+                    <button type="submit" className="btn btn-primary" disabled={chatLoading}>
+                      {chatLoading ? 'Sending…' : 'Send'}
+                    </button>
+                  </form>
+                </div>
+              </GlassSurface>
+            ) : null}
           </div>
           <aside className="event-details-sidebar">
             <GlassSurface

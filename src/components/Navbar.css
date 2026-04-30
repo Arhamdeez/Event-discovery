@@ -121,12 +121,6 @@
   white-space: nowrap;
 }
 
-.btn-signup {
-  margin-left: 0.5rem;
-  border-radius: var(--radius-md);
-  padding-inline: 1.4rem;
-}
-
 .navbar-mobile-overlay,
 .navbar-mobile-drawer {
   display: none;
@@ -295,8 +289,7 @@
     height: 2rem;
   }
 
-  .navbar-cta .btn,
-  .btn-signup {
+  .navbar-cta .btn {
     padding: 0.42rem 0.62rem;
     font-size: 0.78rem;
   }

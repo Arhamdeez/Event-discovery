@@ -19,6 +19,18 @@ service cloud.firestore {
         ];
     }
 
+    function isEventParticipant(eventId) {
+      return signedIn()
+        && (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/attended/$(eventId))
+          || (
+            exists(/databases/$(database)/documents/events/$(eventId))
+            && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid
+          )
+          || isAdmin()
+        );
+    }
+
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
     }
@@ -68,6 +80,18 @@ service cloud.firestore {
               == ((resource.data.attendeeCount is int) ? resource.data.attendeeCount : 0) - 1
           )
         );
+
+      match /messages/{messageId} {
+        allow read: if isEventParticipant(eventId);
+        allow create: if isEventParticipant(eventId)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.senderEmail is string
+          && request.resource.data.senderName is string
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 800;
+        allow update, delete: if false;
+      }
     }
   }
 }
