@@ -161,6 +161,20 @@
   color: var(--color-text-muted);
 }
 
+.organizer-followers {
+  margin: 0 0 0.2rem;
+  color: var(--color-text-secondary);
+  font-size: 0.86rem;
+}
+
+.organizer-follow-action {
+  margin-top: 0.9rem;
+}
+
+.organizer-follow-action .btn {
+  width: 100%;
+}
+
 .event-details-sidebar {
   position: sticky;
   top: 96px;

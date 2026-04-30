@@ -28,6 +28,20 @@ service cloud.firestore {
     match /users/{userId}/attended/{eventId} {
       allow read, write: if isOwner(userId);
     }
+    match /users/{userId}/followers/{followerId} {
+      allow read: if isOwner(userId) || isOwner(followerId) || isAdmin();
+      allow create: if isOwner(followerId)
+        && request.resource.data.uid == followerId
+        && request.resource.data.organizerId == userId;
+      allow delete: if isOwner(followerId);
+    }
+    match /users/{userId}/following/{organizerId} {
+      allow read: if isOwner(userId) || isOwner(organizerId) || isAdmin();
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.organizerId == organizerId;
+      allow delete: if isOwner(userId);
+    }
 
     // Public feed (Explore / landing / shareable links). Anyone can read; only owner can write.
     match /events/{eventId} {

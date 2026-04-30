@@ -16,9 +16,23 @@ const TABS = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('created');
+  const [followBusyId, setFollowBusyId] = useState('');
+  const [followError, setFollowError] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const { isLoggedIn, authLoading, createdEvents, attendedEventIds, user, logout } = useAuth();
+  const {
+    isLoggedIn,
+    authLoading,
+    createdEvents,
+    attendedEventIds,
+    user,
+    logout,
+    followersCount,
+    followingIds,
+    followableOrganizers,
+    followOrganizer,
+    unfollowOrganizer,
+  } = useAuth();
   const publicEvents = usePublicFirestoreEvents();
 
   const pendingCreatedEvent = location.state?.pendingCreatedEvent;
@@ -47,6 +61,23 @@ export default function Dashboard() {
       )
       .filter(Boolean);
   }, [attendedEventIds, createdEvents, publicEvents]);
+
+  const handleFollowToggle = async (organizer) => {
+    if (!organizer?.id) return;
+    setFollowError('');
+    setFollowBusyId(organizer.id);
+    try {
+      if (followingIds.includes(organizer.id)) {
+        await unfollowOrganizer(organizer.id);
+      } else {
+        await followOrganizer(organizer);
+      }
+    } catch (err) {
+      setFollowError(err.message || 'Could not update follow status.');
+    } finally {
+      setFollowBusyId('');
+    }
+  };
 
   if (authLoading) {
     return (
@@ -111,10 +142,63 @@ export default function Dashboard() {
               <div>
                 <p className="dashboard-account-label">Signed in as</p>
                 <p className="dashboard-account-email">{user?.email || 'User'}</p>
+                <p className="dashboard-followers-count">Followers: {followersCount}</p>
               </div>
               <button type="button" className="btn btn-ghost" onClick={logout}>
                 Sign out
               </button>
+            </div>
+          </GlassSurface>
+          <GlassSurface
+            className="dashboard-follow-card"
+            borderRadius={16}
+            width="100%"
+            backgroundOpacity={0.06}
+            saturation={1.3}
+            displace={0.3}
+            style={{ height: 'auto', marginBottom: '1rem' }}
+          >
+            <div className="dashboard-follow-inner">
+              <div>
+                <h2>Who to follow</h2>
+                <p>Follow active organizers to get notified when their events are approved.</p>
+              </div>
+              {followError ? (
+                <p className="auth-error dashboard-follow-error" role="alert">{followError}</p>
+              ) : null}
+              <div className="dashboard-follow-list">
+                {followableOrganizers.length ? followableOrganizers.map((organizer) => {
+                  const isFollowing = followingIds.includes(organizer.id);
+                  return (
+                    <div key={organizer.id} className="dashboard-follow-item">
+                      <div>
+                        <strong>{organizer.organizerName || 'Organizer'}</strong>
+                        {organizer.organizerEmail ? (
+                          <p>{organizer.organizerEmail}</p>
+                        ) : (
+                          <p>User ID: {organizer.id}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={`btn ${isFollowing ? 'btn-ghost' : 'btn-primary'}`}
+                        disabled={followBusyId === organizer.id}
+                        onClick={() => handleFollowToggle(organizer)}
+                      >
+                        {followBusyId === organizer.id
+                          ? 'Please wait…'
+                          : isFollowing
+                            ? 'Unfollow'
+                            : 'Follow'}
+                      </button>
+                    </div>
+                  );
+                }) : (
+                  <p className="empty-state" style={{ padding: '0.25rem 0 0' }}>
+                    No organizers available right now.
+                  </p>
+                )}
+              </div>
             </div>
           </GlassSurface>
           <div className="dashboard-header">

@@ -8,15 +8,29 @@ import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK, getEventImageByCategory } from '../constants/images';
 import { buildTicketTiers } from '../lib/tickets';
 import { resolveEventOrganizer } from '../lib/organizers';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
-  const { isLoggedIn, isAdmin, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
+  const {
+    isLoggedIn,
+    isAdmin,
+    attendEvent,
+    leaveEvent,
+    attendedEventIds,
+    createdEvents,
+    user,
+    followingIds,
+    followOrganizer,
+    unfollowOrganizer,
+  } = useAuth();
   const [attendError, setAttendError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followError, setFollowError] = useState('');
+  const [organizerFollowersCount, setOrganizerFollowersCount] = useState(0);
   const [selectedTier, setSelectedTier] = useState('');
   const [remoteEvent, setRemoteEvent] = useState(null);
   const [remoteLoaded, setRemoteLoaded] = useState(false);
@@ -54,6 +68,9 @@ export default function EventDetails() {
   const isPublished = reviewStatus === 'approved';
   const ticketTiers = buildTicketTiers();
   const organizer = resolveEventOrganizer(event);
+  const organizerId = String(event?.organizerId || '');
+  const canFollowOrganizer = Boolean(isLoggedIn && organizerId && organizerId !== user?.uid);
+  const isFollowingOrganizer = Boolean(organizerId && followingIds.includes(organizerId));
 
   const handleGetTicket = () => {
     if (!selectedTier) {
@@ -74,6 +91,22 @@ export default function EventDetails() {
   useEffect(() => {
     if (!isAttending) setSelectedTier('');
   }, [isAttending, event?.id]);
+
+  useEffect(() => {
+    setFollowError('');
+  }, [event?.id]);
+
+  useEffect(() => {
+    if (!db || !organizerId) {
+      setOrganizerFollowersCount(0);
+      return undefined;
+    }
+    return onSnapshot(
+      collection(db, 'users', organizerId, 'followers'),
+      (snap) => setOrganizerFollowersCount(snap.size),
+      () => setOrganizerFollowersCount(0),
+    );
+  }, [organizerId]);
 
   if (!event && !remoteLoaded) {
     return (
@@ -177,6 +210,7 @@ export default function EventDetails() {
                   </div>
                   <div>
                     <strong>{organizer.organizerName}</strong>
+                    <p className="organizer-followers">{organizerFollowersCount} followers</p>
                     <a
                       className="organizer-email"
                       href={`mailto:${organizer.organizerEmail}`}
@@ -185,6 +219,37 @@ export default function EventDetails() {
                     </a>
                   </div>
                 </div>
+                {canFollowOrganizer ? (
+                  <div className="organizer-follow-action">
+                    {followError ? <p className="auth-error" role="alert">{followError}</p> : null}
+                    <button
+                      type="button"
+                      className={`btn ${isFollowingOrganizer ? 'btn-ghost' : 'btn-primary'}`}
+                      disabled={followLoading}
+                      onClick={async () => {
+                        setFollowError('');
+                        setFollowLoading(true);
+                        try {
+                          if (isFollowingOrganizer) {
+                            await unfollowOrganizer(organizerId);
+                          } else {
+                            await followOrganizer({
+                              id: organizerId,
+                              organizerEmail: organizer.organizerEmail,
+                              organizerName: organizer.organizerName,
+                            });
+                          }
+                        } catch (err) {
+                          setFollowError(err.message || 'Could not update follow status.');
+                        } finally {
+                          setFollowLoading(false);
+                        }
+                      }}
+                    >
+                      {followLoading ? 'Please wait…' : isFollowingOrganizer ? 'Unfollow organizer' : 'Follow organizer'}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </GlassSurface>
           </div>

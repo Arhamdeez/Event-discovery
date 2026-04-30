@@ -50,7 +50,7 @@ function stripUndefined(obj) {
 
 function firestoreErrorMessage(code, message) {
   if (code === 'permission-denied') {
-    return 'Firestore blocked this save. Publish Firestore Rules that allow signed-in users to RSVP (increment attendeeCount) and write their own attended list, then try again.'
+    return 'Firestore blocked this save. Publish the latest Firestore Rules for this feature, then try again.'
   }
   if (code === 'unavailable' || code === 'deadline-exceeded') {
     return 'Could not reach Firestore. Check your network and try again.'
@@ -66,6 +66,9 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(() => Boolean(auth));
   const [createdEvents, setCreatedEvents] = useState([]);
   const [attendedEventIds, setAttendedEventIds] = useState([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingIds, setFollowingIds] = useState([]);
+  const [followableOrganizers, setFollowableOrganizers] = useState([]);
 
   useEffect(() => {
     if (!auth) {
@@ -76,6 +79,9 @@ export function AuthProvider({ children }) {
         setUser(null);
         setCreatedEvents([]);
         setAttendedEventIds([]);
+        setFollowersCount(0);
+        setFollowingIds([]);
+        setFollowableOrganizers([]);
       } else {
         const email = (fbUser.email || '').toLowerCase().trim();
         setUser({
@@ -121,6 +127,64 @@ export function AuthProvider({ children }) {
       unsubAttended();
     };
   }, [uid]);
+
+  useEffect(() => {
+    if (!db || !uid) {
+      return undefined;
+    }
+
+    const unsubFollowers = onSnapshot(collection(db, 'users', uid, 'followers'), (snap) => {
+      setFollowersCount(snap.size);
+    });
+
+    const unsubFollowing = onSnapshot(collection(db, 'users', uid, 'following'), (snap) => {
+      setFollowingIds(snap.docs.map((d) => d.id));
+    });
+
+    return () => {
+      unsubFollowers();
+      unsubFollowing();
+    };
+  }, [uid]);
+
+  useEffect(() => {
+    if (!db || !uid) {
+      return undefined;
+    }
+
+    const unsubOrganizers = onSnapshot(
+      collection(db, 'events'),
+      (snap) => {
+        const uniqueOrganizers = new Map();
+        snap.docs.forEach((eventDoc) => {
+          const data = eventDoc.data() || {};
+          const organizerId = String(data.organizerId || '').trim();
+          if (!organizerId || organizerId === uid) {
+            return;
+          }
+          if (uniqueOrganizers.has(organizerId)) {
+            return;
+          }
+          uniqueOrganizers.set(organizerId, {
+            id: organizerId,
+            organizerName: data.organizerName || data.organizerEmail?.split?.('@')?.[0] || 'Organizer',
+            organizerEmail: data.organizerEmail || '',
+          });
+        });
+
+        setFollowableOrganizers(
+          Array.from(uniqueOrganizers.values()).sort((a, b) =>
+            String(a.organizerName).localeCompare(String(b.organizerName)),
+          ),
+        );
+      },
+      () => {
+        setFollowableOrganizers([]);
+      },
+    );
+
+    return () => unsubOrganizers();
+  }, [uid, followingIds]);
 
   const login = useCallback(async (email, password) => {
     if (!auth) {
@@ -352,6 +416,76 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const followOrganizer = useCallback(async (organizerInput) => {
+    if (!db || !auth?.currentUser) {
+      throw new Error(!auth?.currentUser ? 'You must be signed in.' : 'Firestore is not available.');
+    }
+    const organizerId =
+      typeof organizerInput === 'string'
+        ? organizerInput
+        : organizerInput?.id || organizerInput?.organizerId || '';
+    if (!organizerId) {
+      throw new Error('Invalid organizer.');
+    }
+    const u = auth.currentUser;
+    if (organizerId === u.uid) {
+      throw new Error('You cannot follow yourself.');
+    }
+
+    const followerRef = doc(db, 'users', organizerId, 'followers', u.uid);
+    const followingRef = doc(db, 'users', u.uid, 'following', organizerId);
+    const organizerEmail =
+      typeof organizerInput === 'object' && organizerInput
+        ? organizerInput.organizerEmail || ''
+        : '';
+    const organizerName =
+      typeof organizerInput === 'object' && organizerInput
+        ? organizerInput.organizerName || ''
+        : '';
+    const followerPayload = {
+      uid: u.uid,
+      organizerId,
+      followerEmail: u.email || '',
+      followedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    const followingPayload = {
+      uid: u.uid,
+      organizerId,
+      organizerEmail,
+      organizerName,
+      followedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    try {
+      const batch = writeBatch(db);
+      batch.set(followerRef, followerPayload);
+      batch.set(followingRef, followingPayload);
+      await batch.commit();
+    } catch (e) {
+      throw new Error(firestoreErrorMessage(e.code, e.message));
+    }
+  }, []);
+
+  const unfollowOrganizer = useCallback(async (organizerId) => {
+    if (!db || !auth?.currentUser) {
+      throw new Error(!auth?.currentUser ? 'You must be signed in.' : 'Firestore is not available.');
+    }
+    if (!organizerId) {
+      throw new Error('Invalid organizer.');
+    }
+    const u = auth.currentUser;
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'users', organizerId, 'followers', u.uid));
+      batch.delete(doc(db, 'users', u.uid, 'following', organizerId));
+      await batch.commit();
+    } catch (e) {
+      throw new Error(firestoreErrorMessage(e.code, e.message));
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -369,8 +503,30 @@ export function AuthProvider({ children }) {
       attendedEventIds,
       attendEvent,
       leaveEvent,
+      followersCount,
+      followingIds,
+      followableOrganizers,
+      followOrganizer,
+      unfollowOrganizer,
     }),
-    [user, authLoading, login, signup, logout, createdEvents, addCreatedEvent, updateCreatedEvent, attendedEventIds, attendEvent, leaveEvent],
+    [
+      user,
+      authLoading,
+      login,
+      signup,
+      logout,
+      createdEvents,
+      addCreatedEvent,
+      updateCreatedEvent,
+      attendedEventIds,
+      attendEvent,
+      leaveEvent,
+      followersCount,
+      followingIds,
+      followableOrganizers,
+      followOrganizer,
+      unfollowOrganizer,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
