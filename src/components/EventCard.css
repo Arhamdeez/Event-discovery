@@ -1,5 +1,6 @@
 .event-card-glass {
   display: block;
+  min-height: 320px;
 }
 
 .event-card-glass .glass-surface__content {
@@ -120,4 +121,44 @@
 
 .event-card--compact .event-card-title {
   font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .event-card-glass {
+    min-height: 0;
+  }
+
+  .event-card-body {
+    padding: 1rem;
+    gap: 0.45rem;
+  }
+
+  .event-card-title {
+    font-size: 1rem;
+  }
+
+  .event-card-meta {
+    font-size: 0.82rem;
+    gap: 0.4rem 0.75rem;
+  }
+
+  .event-card-attendees {
+    font-size: 0.78rem;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .event-card {
+    transform: none !important;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .event-card:hover {
+    transform: none;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .event-card:hover .event-card-image img {
+    transform: none;
+  }
 }

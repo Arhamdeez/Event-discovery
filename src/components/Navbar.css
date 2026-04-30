@@ -8,6 +8,7 @@
 .navbar-shell-inner {
   display: flex;
   justify-content: center;
+  pointer-events: auto;
 }
 
 .navbar {
@@ -154,6 +155,7 @@
   .navbar-menu-btn {
     display: inline-flex;
     margin-left: auto;
+    touch-action: manipulation;
   }
 
   .navbar-links {
@@ -199,12 +201,16 @@
     border-left: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: -18px 0 36px rgba(0, 0, 0, 0.45);
     transform: translateX(100%);
+    visibility: hidden;
+    pointer-events: none;
     transition: transform 0.23s ease;
     z-index: 150;
   }
 
   .navbar-mobile-drawer--open {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .navbar-mobile-header {
@@ -234,8 +240,10 @@
   }
 
   .navbar-mobile-links a {
+    display: block;
     color: var(--color-text-secondary);
     padding: 0.62rem 0.7rem;
+    min-height: 44px;
     border-radius: var(--radius-sm);
     border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.02);

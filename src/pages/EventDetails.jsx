@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
 import { getEventById } from '../data/mock';
-import { EVENT_IMAGE_FALLBACK } from '../constants/images';
+import { EVENT_IMAGE_FALLBACK, getEventImageByCategory } from '../constants/images';
 import { buildTicketTiers } from '../lib/tickets';
 import { resolveEventOrganizer } from '../lib/organizers';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -14,7 +14,7 @@ import './EventDetails.css';
 
 export default function EventDetails() {
   const { id } = useParams();
-  const { isLoggedIn, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
+  const { isLoggedIn, isAdmin, attendEvent, leaveEvent, attendedEventIds, createdEvents } = useAuth();
   const [attendError, setAttendError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedTier, setSelectedTier] = useState('');
@@ -46,11 +46,13 @@ export default function EventDetails() {
   }, [id, createdEvents]);
 
   const event = remoteEvent ? { ...localEvent, ...remoteEvent } : localEvent;
-  const primaryUrl = event?.image || EVENT_IMAGE_FALLBACK;
+  const primaryUrl = getEventImageByCategory(event?.category);
   const [bannerSrc, setBannerSrc] = useState(primaryUrl);
   const isAttending = event && attendedEventIds.includes(event.id);
   const canEdit = Boolean(event && createdEvents.some((e) => String(e.id) === String(event.id)));
-  const ticketTiers = event?.ticketTiers?.length ? event.ticketTiers : buildTicketTiers(event);
+  const reviewStatus = String(event?.reviewStatus || 'approved').toLowerCase();
+  const isPublished = reviewStatus === 'approved';
+  const ticketTiers = buildTicketTiers();
   const organizer = resolveEventOrganizer(event);
 
   const handleGetTicket = () => {
@@ -91,6 +93,19 @@ export default function EventDetails() {
         <Navbar />
         <main className="container section">
           <p>Event not found.</p>
+          <Link to="/events">Back to events</Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isPublished && !canEdit && !isAdmin) {
+    return (
+      <div className="events-page">
+        <Navbar />
+        <main className="container section">
+          <p>This event is under admin review and is not public yet.</p>
           <Link to="/events">Back to events</Link>
         </main>
         <Footer />
@@ -187,12 +202,6 @@ export default function EventDetails() {
                 <p className="attendee-count">
                   <strong>{event.attendeeCount ?? 0}</strong> attending
                 </p>
-                {event.ticketName || event.ticketPrice != null ? (
-                  <p className="ticket-summary">
-                    <strong>{event.ticketName || 'Ticket'}</strong>
-                    {event.ticketPrice != null ? ` · PKR ${event.ticketPrice}` : ''}
-                  </p>
-                ) : null}
                 <div className="ticket-tiers">
                   {ticketTiers.map((tier) => (
                     <div key={tier.segment} className="ticket-tier-row">

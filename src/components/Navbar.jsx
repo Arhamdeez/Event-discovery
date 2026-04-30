@@ -43,6 +43,7 @@ export default function Navbar() {
               type="button"
               className="navbar-menu-btn"
               aria-expanded={menuOpen}
+              aria-controls="navbar-mobile-drawer"
               aria-label="Toggle navigation menu"
               onClick={() => setMenuOpen((v) => !v)}
             >
@@ -58,13 +59,23 @@ export default function Navbar() {
               {isAdmin && <Link to="/admin" onClick={closeMenu}>Admin</Link>}
             </nav>
             <div className="navbar-cta">
-              {isLoggedIn ? <span className="navbar-user-email">{user?.email}</span> : null}
+              {isLoggedIn ? (
+                <span className="navbar-user-email">{user?.email}</span>
+              ) : (
+                <Link to="/login" className="btn btn-primary" onClick={closeMenu}>
+                  Sign in
+                </Link>
+              )}
             </div>
           </div>
         </GlassSurface>
       </div>
-      <div className={`navbar-mobile-overlay ${menuOpen ? 'navbar-mobile-overlay--open' : ''}`} onClick={closeMenu} />
-      <aside className={`navbar-mobile-drawer ${menuOpen ? 'navbar-mobile-drawer--open' : ''}`} aria-hidden={!menuOpen}>
+      <div className={`navbar-mobile-overlay ${menuOpen ? 'navbar-mobile-overlay--open' : ''}`} aria-hidden={!menuOpen} onClick={closeMenu} />
+      <aside
+        id="navbar-mobile-drawer"
+        className={`navbar-mobile-drawer ${menuOpen ? 'navbar-mobile-drawer--open' : ''}`}
+        aria-hidden={!menuOpen}
+      >
         <div className="navbar-mobile-header">
           <span>Menu</span>
           <button type="button" className="navbar-mobile-close" onClick={closeMenu} aria-label="Close menu">
@@ -79,7 +90,13 @@ export default function Navbar() {
           {isAdmin && <Link to="/admin" onClick={closeMenu}>Admin</Link>}
         </nav>
         <div className="navbar-mobile-cta">
-          {isLoggedIn ? <p className="navbar-mobile-email">{user?.email}</p> : null}
+          {isLoggedIn ? (
+            <p className="navbar-mobile-email">{user?.email}</p>
+          ) : (
+            <Link to="/login" className="btn btn-primary" onClick={closeMenu}>
+              Sign in
+            </Link>
+          )}
         </div>
       </aside>
     </header>

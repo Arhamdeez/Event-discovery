@@ -7,6 +7,7 @@ export const categories = [
   { id: 6, name: 'Food', slug: 'food', icon: '◎' },
   { id: 7, name: 'Community', slug: 'community', icon: '◉' },
   { id: 8, name: 'Culture', slug: 'culture', icon: '۞' },
+  { id: 9, name: 'Gaming', slug: 'gaming', icon: '✦' },
 ];
 
 export const mockFeaturedEvents = [

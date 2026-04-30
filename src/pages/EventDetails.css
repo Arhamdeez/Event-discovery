@@ -284,6 +284,14 @@
     font-size: 0.92rem;
   }
 
+  .organizer-info {
+    align-items: flex-start;
+  }
+
+  .organizer-email {
+    word-break: break-word;
+  }
+
   .event-details-body .glass-surface__content,
   .organizer .glass-surface__content,
   .sidebar-card .glass-surface__content {
@@ -293,5 +301,27 @@
   .ticket-tier-row {
     padding: 0.5rem 0.6rem;
     font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .event-banner {
+    height: 190px;
+    margin-bottom: -2rem;
+  }
+
+  .event-details-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .event-details-meta span::before {
+    display: none;
+  }
+
+  .ticket-tier-row {
+    align-items: flex-start;
+    padding: 0.55rem;
   }
 }

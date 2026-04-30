@@ -18,9 +18,12 @@ import { auth, db, firebaseInitError } from '../lib/firebase';
 import { detectAndCacheAutoCity } from '../lib/autoCity';
 import { resolveEventOrganizer } from '../lib/organizers';
 import { buildTicketTiers } from '../lib/tickets';
+import { getEventImageByCategory } from '../constants/images';
 import { AuthContext } from './authContext';
 
 const adminEmail = (import.meta.env.VITE_ADMIN_EMAIL || 'admin@raunaq.com').toLowerCase().trim();
+const fixedAdminEmails = ['l226619@lhr.nu.edu.pk', 'l226994@lhr.nu.edu.pk'];
+const adminEmails = [...new Set([adminEmail, ...fixedAdminEmails].map((email) => String(email || '').toLowerCase().trim()).filter(Boolean))];
 
 function authErrorMessage(code) {
   switch (code) {
@@ -74,10 +77,11 @@ export function AuthProvider({ children }) {
         setCreatedEvents([]);
         setAttendedEventIds([]);
       } else {
+        const email = (fbUser.email || '').toLowerCase().trim();
         setUser({
           uid: fbUser.uid,
           email: fbUser.email || '',
-          isAdmin: (fbUser.email || '').toLowerCase() === adminEmail,
+          isAdmin: adminEmails.includes(email),
         });
       }
       setAuthLoading(false);
@@ -174,8 +178,13 @@ export function AuthProvider({ children }) {
     const email = u.email || 'host@events.app';
     const namePart = email.split('@')[0] || 'host';
     const organizerName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    const publicPayload = stripUndefined({
+    const reviewStatus = 'pending';
+    const eventPayload = stripUndefined({
       ...payload,
+      reviewStatus,
+    });
+    const publicPayload = stripUndefined({
+      ...eventPayload,
       organizerId: u.uid,
       organizerEmail: email,
       organizerName,
@@ -187,7 +196,7 @@ export function AuthProvider({ children }) {
     const batch = writeBatch(db);
     const userRef = doc(db, 'users', u.uid, 'createdEvents', event.id);
     const publicRef = doc(db, 'events', event.id);
-    batch.set(userRef, { ...payload, updatedAt: serverTimestamp() });
+    batch.set(userRef, { ...eventPayload, updatedAt: serverTimestamp() });
     batch.set(publicRef, publicPayload);
 
     try {
@@ -216,9 +225,14 @@ export function AuthProvider({ children }) {
     const email = u.email || 'host@events.app';
     const namePart = email.split('@')[0] || 'host';
     const organizerName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    const reviewStatus = 'pending';
+    const eventPayload = stripUndefined({
+      ...payload,
+      reviewStatus,
+    });
 
     const publicPayload = stripUndefined({
-      ...payload,
+      ...eventPayload,
       organizerId: u.uid,
       organizerEmail: email,
       organizerName,
@@ -229,7 +243,7 @@ export function AuthProvider({ children }) {
     const batch = writeBatch(db);
     const userRef = doc(db, 'users', u.uid, 'createdEvents', event.id);
     const publicRef = doc(db, 'events', event.id);
-    batch.set(userRef, { ...payload, updatedAt: serverTimestamp() }, { merge: true });
+    batch.set(userRef, { ...eventPayload, updatedAt: serverTimestamp() }, { merge: true });
     batch.set(publicRef, publicPayload, { merge: true });
 
     try {
@@ -272,11 +286,9 @@ export function AuthProvider({ children }) {
               time: eventSeed?.time || '',
               location: eventSeed?.location || '',
               category: eventSeed?.category || 'General',
-              image: eventSeed?.image,
-              ticketName: eventSeed?.ticketName,
-              ticketPrice: eventSeed?.ticketPrice,
-              ticketUrl: eventSeed?.ticketUrl,
-              ticketTiers: eventSeed?.ticketTiers || buildTicketTiers({ ...eventSeed, id: eventId }),
+              image: getEventImageByCategory(eventSeed?.category || 'General'),
+              reviewStatus: 'approved',
+              ticketTiers: buildTicketTiers(),
               organizerId: u.uid,
               organizerEmail: organizer.organizerEmail,
               organizerName: organizer.organizerName,
@@ -347,6 +359,7 @@ export function AuthProvider({ children }) {
       firebaseInitError,
       isLoggedIn: !!user,
       isAdmin: !!user?.isAdmin,
+      adminEmails,
       login,
       signup,
       logout,

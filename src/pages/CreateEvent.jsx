@@ -5,10 +5,8 @@ import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
 import { categories } from '../data/mock';
-import { EVENT_IMAGE_FALLBACK } from '../constants/images';
+import { getEventImageByCategory } from '../constants/images';
 import './CreateEvent.css';
-
-const defaultImage = EVENT_IMAGE_FALLBACK;
 
 function toDateInputValue(dateStr) {
   if (!dateStr) return '';
@@ -59,14 +57,11 @@ export default function CreateEvent() {
     const form = e.target;
     const categorySlug = form.querySelector('#category').value;
     const categoryName = categories.find((c) => c.slug === categorySlug)?.name || categorySlug;
+    const categoryImage = getEventImageByCategory(categoryName);
     const dateVal = form.querySelector('#date').value;
     const dateStr = dateVal ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
     const timeVal = form.querySelector('#time').value;
     const timeStr = timeVal ? new Date(`2000-01-01T${timeVal}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
-    const ticketName = form.querySelector('#ticketName').value.trim();
-    const ticketPriceRaw = form.querySelector('#ticketPrice').value.trim();
-    const ticketUrl = form.querySelector('#ticketUrl').value.trim();
-    const ticketPrice = ticketPriceRaw ? Number(ticketPriceRaw) : null;
 
     const event = {
       id: isEdit ? existing?.id || id : `user-${Date.now()}`,
@@ -77,10 +72,8 @@ export default function CreateEvent() {
       location: form.querySelector('#location').value.trim(),
       category: categoryName,
       attendeeCount: isEdit ? (existing?.attendeeCount ?? 0) : 0,
-      image: form.querySelector('#image').value.trim() || defaultImage,
-      ticketName: ticketName || undefined,
-      ticketPrice: Number.isFinite(ticketPrice) ? ticketPrice : undefined,
-      ticketUrl: ticketUrl || undefined,
+      image: categoryImage,
+      reviewStatus: 'pending',
     };
 
     setSaving(true);
@@ -213,56 +206,10 @@ export default function CreateEvent() {
                 required
               />
             </div>
-            <div className="input-wrap form-full">
-              <label htmlFor="image">Event image URL</label>
-              <input
-                id="image"
-                type="text"
-                className="input"
-                placeholder="https://... (optional)"
-                inputMode="url"
-                autoComplete="off"
-                defaultValue={existing?.image && existing.image !== defaultImage ? existing.image : ''}
-              />
-            </div>
-            <div className="form-row form-grid">
-              <div className="input-wrap">
-                <label htmlFor="ticketName">Add ticket (name)</label>
-                <input
-                  id="ticketName"
-                  type="text"
-                  className="input"
-                  placeholder="e.g. General Admission"
-                  defaultValue={existing?.ticketName || ''}
-                />
-              </div>
-              <div className="input-wrap">
-                <label htmlFor="ticketPrice">Ticket price (PKR)</label>
-                <input
-                  id="ticketPrice"
-                  type="number"
-                  className="input"
-                  min="0"
-                  step="0.01"
-                  placeholder="e.g. 500"
-                  defaultValue={existing?.ticketPrice ?? ''}
-                />
-              </div>
-              <div className="input-wrap">
-                <label htmlFor="ticketUrl">Ticket link (optional)</label>
-                <input
-                  id="ticketUrl"
-                  type="url"
-                  className="input"
-                  placeholder="https://your-ticket-link"
-                  defaultValue={existing?.ticketUrl || ''}
-                />
-              </div>
-            </div>
             <div className="form-actions">
               <Link to="/dashboard" className="btn btn-ghost">Cancel</Link>
               <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
-                {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create event'}
+                {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Submit event'}
               </button>
             </div>
           </form>

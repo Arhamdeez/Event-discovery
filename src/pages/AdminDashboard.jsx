@@ -1,24 +1,117 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { collection, doc, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
+import { db } from '../lib/firebase';
 import './AdminDashboard.css';
 
-const PENDING_EVENTS = [
-  { id: 'p1', title: 'Late Night Study Session', date: 'Mar 20', organizer: 'study@club.edu', status: 'pending' },
-  { id: 'p2', title: 'Improv Comedy Night', date: 'Mar 25', organizer: 'comedy@club.edu', status: 'pending' },
-];
-
-const USERS = [
-  { id: 'u1', email: 'alex@campus.edu', role: 'user', events: 3 },
-  { id: 'u2', email: 'sam@campus.edu', role: 'user', events: 1 },
-];
+function millis(value) {
+  if (value && typeof value.toMillis === 'function') return value.toMillis();
+  return 0;
+}
 
 export default function AdminDashboard() {
-  const [events, setEvents] = useState(PENDING_EVENTS);
-  const { isLoggedIn, isAdmin, authLoading } = useAuth();
+  const [allEvents, setAllEvents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [actionError, setActionError] = useState('');
+  const [processingId, setProcessingId] = useState('');
+  const { isLoggedIn, isAdmin, authLoading, user, adminEmails = [] } = useAuth();
+
+  useEffect(() => {
+    if (!db || !isLoggedIn || !isAdmin) return undefined;
+    const unsubEvents = onSnapshot(
+      collection(db, 'events'),
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
+        setAllEvents(list);
+      },
+      () => {
+        setActionError('Could not load event submissions.');
+      },
+    );
+    const unsubUsers = onSnapshot(
+      collection(db, 'users'),
+      (snap) => {
+        setUsers(
+          snap.docs.map((d) => ({
+            id: d.id,
+            email: d.data()?.email || '',
+          })),
+        );
+      },
+      (err) => {
+        if (err?.code === 'permission-denied') {
+          setActionError('Could not load users: permission denied. Deploy the latest Firestore rules, then sign out and sign in with an admin email.');
+          return;
+        }
+        setActionError(`Could not load users: ${err?.message || 'unknown error.'}`);
+      },
+    );
+    return () => {
+      unsubEvents();
+      unsubUsers();
+    };
+  }, [isLoggedIn, isAdmin]);
+
+  const eventCountsByOrganizer = useMemo(() => {
+    return allEvents.reduce((acc, ev) => {
+      const organizerId = String(ev.organizerId || '');
+      if (!organizerId) return acc;
+      if (!acc[organizerId]) {
+        acc[organizerId] = { total: 0, pending: 0, approved: 0, rejected: 0 };
+      }
+      acc[organizerId].total += 1;
+      const status = String(ev.reviewStatus || 'approved').toLowerCase();
+      if (status === 'pending') acc[organizerId].pending += 1;
+      else if (status === 'rejected') acc[organizerId].rejected += 1;
+      else acc[organizerId].approved += 1;
+      return acc;
+    }, {});
+  }, [allEvents]);
+
+  const pendingEvents = allEvents.filter((ev) => String(ev.reviewStatus || 'approved').toLowerCase() === 'pending');
+
+  const adminEmailSet = new Set(adminEmails.map((email) => String(email || '').toLowerCase()));
+
+  const handleReview = async (event, nextStatus) => {
+    if (!db || !event?.id) return;
+    setActionError('');
+    setProcessingId(event.id);
+    try {
+      const batch = writeBatch(db);
+      const eventRef = doc(db, 'events', event.id);
+      batch.set(
+        eventRef,
+        {
+          reviewStatus: nextStatus,
+          reviewedBy: user?.email || '',
+          reviewedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+      if (event.organizerId) {
+        const userEventRef = doc(db, 'users', String(event.organizerId), 'createdEvents', event.id);
+        batch.set(
+          userEventRef,
+          {
+            reviewStatus: nextStatus,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+      }
+      await batch.commit();
+    } catch (err) {
+      setActionError(err.message || 'Could not update review status.');
+    } finally {
+      setProcessingId('');
+    }
+  };
 
   if (authLoading) {
     return (
@@ -38,20 +131,13 @@ export default function AdminDashboard() {
     return <Navigate to={isLoggedIn ? '/' : '/login'} replace />;
   }
 
-  const handleApprove = (id) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-  };
-
-  const handleReject = (id) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-  };
-
   return (
     <div className="events-page">
       <Navbar />
       <main className="admin-main">
         <div className="container">
           <h1 className="admin-title">Admin dashboard</h1>
+          {actionError ? <p className="admin-error" role="alert">{actionError}</p> : null}
 
           <GlassSurface
             className="admin-section"
@@ -71,26 +157,38 @@ export default function AdminDashboard() {
                       <th>Event</th>
                       <th>Date</th>
                       <th>Organizer</th>
+                      <th>Category</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {events.length === 0 ? (
+                    {pendingEvents.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="empty-cell">No pending events.</td>
+                        <td colSpan={5} className="empty-cell">No pending events.</td>
                       </tr>
                     ) : (
-                      events.map((ev) => (
+                      pendingEvents.map((ev) => (
                         <tr key={ev.id}>
                           <td>{ev.title}</td>
                           <td>{ev.date}</td>
-                          <td>{ev.organizer}</td>
+                          <td>{ev.organizerEmail || 'Unknown organizer'}</td>
+                          <td>{ev.category || '-'}</td>
                           <td>
                             <div className="action-buttons">
-                              <button type="button" className="btn btn-primary btn-approve" onClick={() => handleApprove(ev.id)}>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-approve"
+                                disabled={processingId === ev.id}
+                                onClick={() => handleReview(ev, 'approved')}
+                              >
                                 Approve
                               </button>
-                              <button type="button" className="btn btn-ghost btn-reject" onClick={() => handleReject(ev.id)}>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-reject"
+                                disabled={processingId === ev.id}
+                                onClick={() => handleReview(ev, 'rejected')}
+                              >
                                 Reject
                               </button>
                             </div>
@@ -122,16 +220,26 @@ export default function AdminDashboard() {
                       <th>Email</th>
                       <th>Role</th>
                       <th>Events</th>
+                      <th>Pending</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {USERS.map((u) => (
-                      <tr key={u.id}>
-                        <td>{u.email}</td>
-                        <td><span className="role-badge">{u.role}</span></td>
-                        <td>{u.events}</td>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="empty-cell">No users found.</td>
                       </tr>
-                    ))}
+                    ) : users.map((u) => {
+                      const role = adminEmailSet.has(String(u.email || '').toLowerCase()) ? 'admin' : 'user';
+                      const counts = eventCountsByOrganizer[u.id] || { total: 0, pending: 0 };
+                      return (
+                        <tr key={u.id}>
+                          <td>{u.email}</td>
+                          <td><span className="role-badge">{role}</span></td>
+                          <td>{counts.total}</td>
+                          <td>{counts.pending}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

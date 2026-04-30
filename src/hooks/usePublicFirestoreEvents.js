@@ -17,7 +17,12 @@ export function usePublicFirestoreEvents() {
     const unsub = onSnapshot(
       collection(db, 'events'),
       (snap) => {
-        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const list = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((ev) => {
+            const status = String(ev.reviewStatus || '').toLowerCase();
+            return !status || status === 'approved';
+          });
         list.sort((a, b) => createdAtMillis(b) - createdAtMillis(a));
         setEvents(list);
       },

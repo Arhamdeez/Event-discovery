@@ -286,6 +286,26 @@ a:hover {
   }
 }
 
+@media (max-width: 640px) {
+  .btn {
+    min-height: 44px;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    font-size: 16px;
+  }
+
+  .section {
+    padding: 2.6rem 0;
+  }
+
+  .section-title {
+    margin-bottom: 1.2rem;
+  }
+}
+
 .section {
   padding: 4rem 0;
 }

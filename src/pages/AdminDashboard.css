@@ -13,6 +13,12 @@
   font-size: 1.75rem;
 }
 
+.admin-error {
+  margin: 0 0 1rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
 .admin-section .glass-surface__content {
   padding: 1.5rem;
   align-items: flex-start;
