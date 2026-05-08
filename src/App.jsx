@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Silk from './components/Silk';
 import './App.css';
-import { firebaseInitError } from './lib/firebase';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const EventsList = lazy(() => import('./pages/EventsList'));
@@ -70,11 +69,6 @@ export default function App() {
         />
       </div>
       <div className="app-content">
-        {firebaseInitError ? (
-          <div className="firebase-config-banner" role="status">
-            Firebase is not configured: {firebaseInitError.message}
-          </div>
-        ) : null}
         <BrowserRouter>
           <Suspense fallback={<RouteFallback />}>
             <Routes>

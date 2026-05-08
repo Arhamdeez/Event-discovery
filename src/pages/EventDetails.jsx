@@ -8,14 +8,13 @@ import { getEventById } from '../data/mock';
 import { EVENT_IMAGE_FALLBACK, getEventImageByCategory } from '../constants/images';
 import { buildTicketTiers } from '../lib/tickets';
 import { resolveEventOrganizer } from '../lib/organizers';
-import { addDoc, collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { apiRequest } from '../lib/api';
 import './EventDetails.css';
 
 function formatChatTime(value) {
   if (!value) return '';
-  const date = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
@@ -46,29 +45,36 @@ export default function EventDetails() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState('');
 
-  const localEvent = id ? getEventById(id) || createdEvents.find((e) => e.id === id) : null;
+  const localEvent = id ? getEventById(id) || createdEvents.find((e) => String(e.id) === String(id)) : null;
 
   useEffect(() => {
-    if (!id || !db) {
-      queueMicrotask(() => {
-        setRemoteLoaded(true);
-        setRemoteEvent(null);
-      });
-      return undefined;
+    if (!id) {
+      setRemoteLoaded(true);
+      setRemoteEvent(null);
+      return;
     }
-    queueMicrotask(() => setRemoteLoaded(false));
-    return onSnapshot(
-      doc(db, 'events', id),
-      (snap) => {
-        setRemoteLoaded(true);
-        setRemoteEvent(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-      },
-      () => {
-        setRemoteLoaded(true);
-        setRemoteEvent(null);
-      },
-    );
-  }, [id, createdEvents]);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await apiRequest(`/api/events/${id}`);
+        if (!cancelled) {
+          setRemoteLoaded(true);
+          setRemoteEvent(data?.event || null);
+        }
+      } catch {
+        if (!cancelled) {
+          setRemoteLoaded(true);
+          setRemoteEvent(null);
+        }
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [id]);
 
   const event = remoteEvent ? { ...localEvent, ...remoteEvent } : localEvent;
   const primaryUrl = getEventImageByCategory(event?.category);
@@ -108,44 +114,52 @@ export default function EventDetails() {
   }, [event?.id]);
 
   useEffect(() => {
-    setChatError('');
-    if (!db || !event?.id || !isLoggedIn || !isAttending) {
-      setChatMessages([]);
-      return undefined;
+    if (!organizerId) {
+      setOrganizerFollowersCount(0);
+      return;
     }
-    const messagesQuery = query(
-      collection(db, 'events', event.id, 'messages'),
-      orderBy('createdAt', 'asc'),
-      limit(200),
-    );
-    return onSnapshot(
-      messagesQuery,
-      (snap) => {
-        setChatMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => {
-        if (err?.code === 'permission-denied') {
-          setChatMessages([]);
-          setChatError('Chat permission denied. Publish the latest Firestore rules to enable real event chat.');
-          return;
-        }
-        setChatMessages([]);
-        setChatError('Could not load chat messages.');
-      },
-    );
-  }, [event?.id, isLoggedIn, isAttending]);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await apiRequest(`/api/users/${organizerId}/followers/count`);
+        if (!cancelled) setOrganizerFollowersCount(Number(data?.followersCount || 0));
+      } catch {
+        if (!cancelled) setOrganizerFollowersCount(0);
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [organizerId]);
 
   useEffect(() => {
-    if (!db || !organizerId) {
-      setOrganizerFollowersCount(0);
-      return undefined;
+    setChatError('');
+    if (!event?.id || !isLoggedIn || !isAttending) {
+      setChatMessages([]);
+      return;
     }
-    return onSnapshot(
-      collection(db, 'users', organizerId, 'followers'),
-      (snap) => setOrganizerFollowersCount(snap.size),
-      () => setOrganizerFollowersCount(0),
-    );
-  }, [organizerId]);
+    let cancelled = false;
+    const loadMessages = async () => {
+      try {
+        const data = await apiRequest(`/api/events/${event.id}/messages`);
+        if (!cancelled) setChatMessages(data?.messages || []);
+      } catch (err) {
+        if (!cancelled) {
+          setChatMessages([]);
+          setChatError(err.message || 'Could not load chat messages.');
+        }
+      }
+    };
+    loadMessages();
+    const interval = window.setInterval(loadMessages, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [event?.id, isLoggedIn, isAttending]);
 
   if (!event && !remoteLoaded) {
     return (
@@ -272,11 +286,7 @@ export default function EventDetails() {
                           if (isFollowingOrganizer) {
                             await unfollowOrganizer(organizerId);
                           } else {
-                            await followOrganizer({
-                              id: organizerId,
-                              organizerEmail: organizer.organizerEmail,
-                              organizerName: organizer.organizerName,
-                            });
+                            await followOrganizer(organizerId);
                           }
                         } catch (err) {
                           setFollowError(err.message || 'Could not update follow status.');
@@ -332,15 +342,13 @@ export default function EventDetails() {
                       setChatError('');
                       setChatLoading(true);
                       try {
-                        await addDoc(collection(db, 'events', event.id, 'messages'), {
-                          uid: user?.uid || '',
-                          senderName: user?.email ? user.email.split('@')[0] : 'Attendee',
-                          senderEmail: user?.email || '',
-                          text,
-                          createdAt: serverTimestamp(),
-                          updatedAt: serverTimestamp(),
+                        await apiRequest(`/api/events/${event.id}/messages`, {
+                          method: 'POST',
+                          body: JSON.stringify({ text }),
                         });
                         setChatInput('');
+                        const data = await apiRequest(`/api/events/${event.id}/messages`);
+                        setChatMessages(data?.messages || []);
                       } catch (err) {
                         setChatError(err.message || 'Could not send message.');
                       } finally {

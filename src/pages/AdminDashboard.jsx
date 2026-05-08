@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { collection, doc, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
-import { db } from '../lib/firebase';
+import { apiRequest } from '../lib/api';
 import './AdminDashboard.css';
 
 function millis(value) {
-  if (value && typeof value.toMillis === 'function') return value.toMillis();
-  return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 export default function AdminDashboard() {
@@ -18,42 +17,31 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [actionError, setActionError] = useState('');
   const [processingId, setProcessingId] = useState('');
-  const { isLoggedIn, isAdmin, authLoading, user, adminEmails = [] } = useAuth();
+  const { isLoggedIn, isAdmin, authLoading, adminEmails = [] } = useAuth();
 
   useEffect(() => {
-    if (!db || !isLoggedIn || !isAdmin) return undefined;
-    const unsubEvents = onSnapshot(
-      collection(db, 'events'),
-      (snap) => {
-        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        list.sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
-        setAllEvents(list);
-      },
-      () => {
-        setActionError('Could not load event submissions.');
-      },
-    );
-    const unsubUsers = onSnapshot(
-      collection(db, 'users'),
-      (snap) => {
-        setUsers(
-          snap.docs.map((d) => ({
-            id: d.id,
-            email: d.data()?.email || '',
-          })),
-        );
-      },
-      (err) => {
-        if (err?.code === 'permission-denied') {
-          setActionError('Could not load users: permission denied. Deploy the latest Firestore rules, then sign out and sign in with an admin email.');
-          return;
-        }
-        setActionError(`Could not load users: ${err?.message || 'unknown error.'}`);
-      },
-    );
+    if (!isLoggedIn || !isAdmin) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [eventsData, usersData] = await Promise.all([
+          apiRequest('/api/admin/events'),
+          apiRequest('/api/admin/users'),
+        ]);
+        if (cancelled) return;
+        const events = [...(eventsData?.events || [])].sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
+        setAllEvents(events);
+        setUsers(usersData?.users || []);
+        setActionError('');
+      } catch (err) {
+        if (!cancelled) setActionError(err.message || 'Could not load admin dashboard.');
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 10000);
     return () => {
-      unsubEvents();
-      unsubUsers();
+      cancelled = true;
+      window.clearInterval(interval);
     };
   }, [isLoggedIn, isAdmin]);
 
@@ -78,34 +66,17 @@ export default function AdminDashboard() {
   const adminEmailSet = new Set(adminEmails.map((email) => String(email || '').toLowerCase()));
 
   const handleReview = async (event, nextStatus) => {
-    if (!db || !event?.id) return;
+    if (!event?.id) return;
     setActionError('');
     setProcessingId(event.id);
     try {
-      const batch = writeBatch(db);
-      const eventRef = doc(db, 'events', event.id);
-      batch.set(
-        eventRef,
-        {
-          reviewStatus: nextStatus,
-          reviewedBy: user?.email || '',
-          reviewedAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-      if (event.organizerId) {
-        const userEventRef = doc(db, 'users', String(event.organizerId), 'createdEvents', event.id);
-        batch.set(
-          userEventRef,
-          {
-            reviewStatus: nextStatus,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true },
-        );
-      }
-      await batch.commit();
+      await apiRequest(`/api/admin/events/${event.id}/review`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const eventsData = await apiRequest('/api/admin/events');
+      const events = [...(eventsData?.events || [])].sort((a, b) => millis(b.updatedAt) - millis(a.updatedAt));
+      setAllEvents(events);
     } catch (err) {
       setActionError(err.message || 'Could not update review status.');
     } finally {

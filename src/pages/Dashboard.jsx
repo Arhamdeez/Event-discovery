@@ -6,7 +6,7 @@ import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import { useAuth } from '../context/useAuth';
 import { getEventById } from '../data/mock';
-import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
+import { usePublicEvents } from '../hooks/usePublicEvents';
 import './Dashboard.css';
 
 const TABS = [
@@ -33,7 +33,7 @@ export default function Dashboard() {
     followOrganizer,
     unfollowOrganizer,
   } = useAuth();
-  const publicEvents = usePublicFirestoreEvents();
+  const publicEvents = usePublicEvents();
 
   const pendingCreatedEvent = location.state?.pendingCreatedEvent;
   const pendingId = pendingCreatedEvent?.id;

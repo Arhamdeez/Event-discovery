@@ -6,7 +6,7 @@ import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import TextPressure from '../components/TextPressure';
 import { mockFeaturedEvents, categories } from '../data/mock';
-import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
+import { usePublicEvents } from '../hooks/usePublicEvents';
 import { useAutoCity } from '../hooks/useAutoCity';
 import './Landing.css';
 
@@ -16,7 +16,7 @@ function mergeFeatured(live, mock) {
 }
 
 export default function Landing() {
-  const liveEvents = usePublicFirestoreEvents();
+  const liveEvents = usePublicEvents();
   const { hash } = useLocation();
   const navigate = useNavigate();
   const { city: autoCity } = useAutoCity();

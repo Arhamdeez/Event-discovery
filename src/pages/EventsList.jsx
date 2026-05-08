@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import { mockEventsList, categories } from '../data/mock';
-import { usePublicFirestoreEvents } from '../hooks/usePublicFirestoreEvents';
+import { usePublicEvents } from '../hooks/usePublicEvents';
 import { useAutoCity } from '../hooks/useAutoCity';
 import './EventsList.css';
 
@@ -29,6 +29,8 @@ function mergeLiveWithMock(live, mock) {
 function createdAtMillis(ev) {
   const v = ev.createdAt;
   if (v && typeof v.toMillis === 'function') return v.toMillis();
+  const parsed = new Date(v);
+  if (!Number.isNaN(parsed.getTime())) return parsed.getTime();
   return 0;
 }
 
@@ -79,7 +81,7 @@ function cityTokens(value) {
 }
 
 export default function EventsList() {
-  const liveEvents = usePublicFirestoreEvents();
+  const liveEvents = usePublicEvents();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sort, setSort] = useState('latest');
   const { city: autoCity, coords: autoCoords, loading: autoCityLoading } = useAutoCity({ enabled: !searchParams.get('city') });

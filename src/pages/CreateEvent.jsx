@@ -78,14 +78,14 @@ export default function CreateEvent() {
 
     setSaving(true);
     try {
+      let savedEvent = event;
       if (isEdit) {
         if (!existing) throw new Error('You can only edit events you created.');
-        await updateCreatedEvent(event);
+        savedEvent = (await updateCreatedEvent(event)) || event;
       } else {
-        await addCreatedEvent(event);
+        savedEvent = (await addCreatedEvent(event)) || event;
       }
-      // Only leave this page after Firestore commit succeeds so refresh keeps the event.
-      navigate('/dashboard', { replace: true, state: isEdit ? {} : { pendingCreatedEvent: event } });
+      navigate('/dashboard', { replace: true, state: isEdit ? {} : { pendingCreatedEvent: savedEvent } });
     } catch (err) {
       setSaveError(err.message || 'Could not save the event.');
     } finally {

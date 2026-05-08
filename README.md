@@ -1,6 +1,6 @@
-# Local Event Discovery Platform — UI
+# Local Event Discovery Platform — MERN
 
-A modern **liquid glass** web UI for a local event discovery platform (students & community). Built with **React + Vite** and ready to plug into a MERN backend.
+A modern **liquid glass** event platform for students and community groups. Built with a **MERN backend** (`Express + MongoDB`) and a **React + Vite** frontend.
 
 ## Run
 
@@ -14,7 +14,7 @@ Create a local env file:
 cp .env.example .env
 ```
 
-Fill in `GEMINI_API_KEY` and your `VITE_FIREBASE_*` keys, then run:
+Fill in `MONGODB_URI`, `JWT_SECRET`, and `GEMINI_API_KEY`, then run:
 
 ```bash
 # Terminal 1 (Gemini backend)
@@ -25,19 +25,6 @@ npm run dev
 ```
 
 Open **http://localhost:5173** (the frontend proxies `/api/*` to the backend).
-
-## Pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Landing: hero, search, featured events, categories |
-| `/events` | Events listing with filters & sort |
-| `/events/:id` | Event details, organizer, “Attend” |
-| `/login` | Login form |
-| `/signup` | Sign up (email, password, confirm) |
-| `/dashboard` | User dashboard: Created / Joined events, create button |
-| `/events/new` | Create (or edit) event form |
-| `/admin` | Admin: pending events (approve/reject), user table |
 
 ## Design
 
@@ -53,4 +40,4 @@ Open **http://localhost:5173** (the frontend proxies `/api/*` to the backend).
 - `src/data/mock.js` — Mock events and categories for UI
 - `src/index.css` — Design tokens and glass utilities
 
-Forms and buttons are non-functional (no API); connect to your MERN backend as needed.
+Core flows are API-backed: authentication, event CRUD/review, attendance, follow/unfollow, and event chat.
