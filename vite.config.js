@@ -7,7 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        // Use IPv4 loopback — on some macOS setups `localhost` resolves to ::1 first
+        // while nothing is listening on IPv6, which produces ECONNREFUSED in the proxy.
+        target: 'http://127.0.0.1:4000',
         changeOrigin: true,
       },
     },

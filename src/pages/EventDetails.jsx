@@ -56,7 +56,18 @@ export default function EventDetails() {
     let cancelled = false;
     const load = async () => {
       try {
-        const data = await apiRequest(`/api/events/${id}`);
+        let data = null;
+        const looksMongo = typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
+        if (looksMongo) {
+          try {
+            data = await apiRequest(`/api/events/${id}`);
+          } catch {
+            /* fall through to by-seed */
+          }
+        }
+        if (!data?.event) {
+          data = await apiRequest(`/api/events/by-seed/${encodeURIComponent(id)}`);
+        }
         if (!cancelled) {
           setRemoteLoaded(true);
           setRemoteEvent(data?.event || null);

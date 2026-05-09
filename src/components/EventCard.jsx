@@ -5,7 +5,8 @@ import { EVENT_IMAGE_FALLBACK, getEventImageByCategory } from '../constants/imag
 import './EventCard.css';
 
 export default function EventCard({ event, compact = false }) {
-  const { id, title, date, time, location, category, attendeeCount } = event;
+  const { id, catalogSeedId, title, date, time, location, category, attendeeCount } = event;
+  const detailSlug = catalogSeedId || id;
   const primaryUrl = getEventImageByCategory(category);
   const [imgSrc, setImgSrc] = useState(primaryUrl);
 
@@ -24,7 +25,7 @@ export default function EventCard({ event, compact = false }) {
       displace={0.3}
     >
       <Link
-        to={`/events/${id}`}
+        to={`/events/${detailSlug}`}
         className={`event-card ${compact ? 'event-card--compact' : ''}`}
       >
         <div className="event-card-image">

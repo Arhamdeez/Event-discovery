@@ -5,14 +5,16 @@ import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
 import TextPressure from '../components/TextPressure';
-import { mockFeaturedEvents, categories } from '../data/mock';
+import { categories, mockFeaturedEvents } from '../data/mock';
 import { usePublicEvents } from '../hooks/usePublicEvents';
 import { useAutoCity } from '../hooks/useAutoCity';
 import './Landing.css';
 
 function mergeFeatured(live, mock) {
-  const ids = new Set(live.map((e) => String(e.id)));
-  return [...live, ...mock.filter((m) => !ids.has(String(m.id)))].slice(0, 6);
+  const seedsFromApi = new Set(
+    live.filter((e) => e.catalogSeedId).map((e) => String(e.catalogSeedId)),
+  );
+  return [...live, ...mock.filter((m) => !seedsFromApi.has(String(m.id)))].slice(0, 6);
 }
 
 export default function Landing() {

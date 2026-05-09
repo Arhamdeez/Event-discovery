@@ -71,6 +71,8 @@ const eventSchema = new mongoose.Schema(
     messages: { type: [messageSchema], default: [] },
     lat: { type: Number, default: null },
     lon: { type: Number, default: null },
+    /** Stable id from `src/data/mock.js` — upserted into Mongo so RSVP uses real ObjectIds. */
+    seedKey: { type: String, trim: true, sparse: true, unique: true },
   },
   { timestamps: true },
 );
@@ -93,13 +95,64 @@ const Follow = mongoose.model('Follow', followSchema);
 
 function toPublicEvent(eventDoc) {
   const obj = eventDoc.toObject ? eventDoc.toObject() : eventDoc;
+  const seedKey = obj.seedKey ? String(obj.seedKey) : '';
   return {
     ...obj,
     id: String(obj._id),
     _id: undefined,
+    seedKey: undefined,
+    /** Matches mock `id` so the client can dedupe API rows vs `mockEventsList`. */
+    catalogSeedId: seedKey || undefined,
     attendees: undefined,
     messages: undefined,
   };
+}
+
+const CATALOG_ORGANIZER_ID = 'catalog-demo-organizer';
+
+async function seedCatalogEvents() {
+  try {
+    const { mockEventsList } = await import('./src/data/mock.js');
+    if (!Array.isArray(mockEventsList)) return;
+    for (const item of mockEventsList) {
+      const key = String(item.id ?? '').trim();
+      if (!key) continue;
+      const organizerInitial = String(item.organizerInitial || 'O').charAt(0).toUpperCase();
+      await Event.updateOne(
+        { seedKey: key },
+        {
+          $set: {
+            seedKey: key,
+            title: item.title,
+            description: item.description || '',
+            date: item.date || '',
+            time: item.time || '',
+            location: item.location || '',
+            category: item.category || 'General',
+            image: item.image || '',
+            organizerEmail: item.organizerEmail || '',
+            organizerName: item.organizerName || 'Organizer',
+            organizerInitial,
+            lat: typeof item.lat === 'number' ? item.lat : null,
+            lon: typeof item.lon === 'number' ? item.lon : null,
+            reviewStatus: 'approved',
+          },
+          $setOnInsert: {
+            organizerId: CATALOG_ORGANIZER_ID,
+            attendeeCount: Number(item.attendeeCount) || 0,
+            attendees: [],
+            messages: [],
+            reviewedBy: '',
+            reviewedAt: null,
+          },
+        },
+        { upsert: true },
+      );
+    }
+    console.log(`Catalog events seeded/updated: ${mockEventsList.length}`);
+  } catch (e) {
+    console.error('Catalog seed failed', e);
+  }
 }
 
 function buildToken(user) {
@@ -239,6 +292,26 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
+/** Resolve catalog rows keyed by mock `id` (e.g. "1") — must be registered before `/api/events/:id`. */
+app.get('/api/events/by-seed/:seedKey', authOptional, async (req, res) => {
+  try {
+    const seedKey = String(req.params.seedKey || '').trim();
+    if (!seedKey) return res.status(400).json({ error: 'Invalid catalog key.' });
+    const event = await Event.findOne({ seedKey });
+    if (!event) return res.status(404).json({ error: 'Event not found.' });
+    const uid = req.auth?.uid || '';
+    const isAdmin = Boolean(req.auth?.isAdmin);
+    const canView =
+      event.reviewStatus === 'approved' ||
+      String(event.organizerId) === uid ||
+      isAdmin;
+    if (!canView) return res.status(403).json({ error: 'This event is under review.' });
+    return res.json({ event: toPublicEvent(event) });
+  } catch {
+    return res.status(500).json({ error: 'Could not load event.' });
+  }
+});
+
 app.get('/api/events/:id', authOptional, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -328,7 +401,11 @@ app.post('/api/events/:id/attend', authRequired, async (req, res) => {
       await event.save();
     }
     return res.json({ attendeeCount: event.attendeeCount });
-  } catch {
+  } catch (err) {
+    if (err?.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid event id. Open a live event from the list to RSVP.' });
+    }
+    console.error('RSVP failed', err);
     return res.status(400).json({ error: 'Could not save RSVP.' });
   }
 });
@@ -341,7 +418,11 @@ app.delete('/api/events/:id/attend', authRequired, async (req, res) => {
     event.attendeeCount = event.attendees.length;
     await event.save();
     return res.json({ attendeeCount: event.attendeeCount });
-  } catch {
+  } catch (err) {
+    if (err?.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid event id.' });
+    }
+    console.error('Remove attendance failed', err);
     return res.status(400).json({ error: 'Could not remove attendance.' });
   }
 });
@@ -578,6 +659,7 @@ async function start() {
       throw new Error('Missing MONGODB_URI in environment.');
     }
     await mongoose.connect(mongoUri);
+    await seedCatalogEvents();
     app.listen(port, () => {
       console.log(`MERN server listening on http://localhost:${port}`);
     });

@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EventCard from '../components/EventCard';
 import GlassSurface from '../components/GlassSurface';
-import { mockEventsList, categories } from '../data/mock';
+import { categories, mockEventsList } from '../data/mock';
 import { usePublicEvents } from '../hooks/usePublicEvents';
 import { useAutoCity } from '../hooks/useAutoCity';
 import './EventsList.css';
@@ -21,9 +21,12 @@ function parseEventDate(dateStr) {
   return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
+/** Prefer API rows; add mock rows only for catalog seeds not already returned (e.g. API down or seed not run). */
 function mergeLiveWithMock(live, mock) {
-  const ids = new Set(live.map((e) => String(e.id)));
-  return [...live, ...mock.filter((m) => !ids.has(String(m.id)))];
+  const seedsFromApi = new Set(
+    live.filter((e) => e.catalogSeedId).map((e) => String(e.catalogSeedId)),
+  );
+  return [...live, ...mock.filter((m) => !seedsFromApi.has(String(m.id)))];
 }
 
 function createdAtMillis(ev) {
